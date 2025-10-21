@@ -92,7 +92,7 @@ function Overview() {
 
   return (
     <div className="p-6 bg-[#0D0D0D] min-h-screen text-white">
-        <header className="flex flex-wrap items-center justify-between mb-8">
+        <header className="flex flex-wrap items-center justify-between mb-8 gap-2">
             <h1 className="text-3xl font-bold text-white flex items-center gap-2">
                 <span className="text-[#E10600]"><SiF1 /></span> Season Overview
             </h1>
