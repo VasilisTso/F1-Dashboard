@@ -36,3 +36,4 @@ export const getDriverStandings = async () => get("/current/driverStandings.json
 export const getCurrentSeason = async () => get("/current.json");
 export const getNextRace = async () => get("/current/next.json");
 export const getLastRaceResults = async () => get("/current/last/results.json");
+export const getConstructorStandings = async () => get("/current/constructorStandings.json");
