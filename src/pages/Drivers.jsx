@@ -40,6 +40,32 @@ const DriverModal = ({ driver, onClose}) => {
     );
 };
 
+const teamColors = {
+  "Red Bull": "#223971",
+  "Ferrari": "#EF1A2D",
+  "McLaren": "#FF8000",
+  "Mercedes": "#00A19B",
+  "Aston Martin": "#037A68",
+  "Williams": "#1868DB",
+  "RB F1 Team": "#FFFFFF",
+  "Sauber": "#01C00E",
+  "Haas F1 Team": "#9C9FA2",
+  "Alpine F1 Team": "#02192B",
+};
+
+const teamColorsText = {
+  "Red Bull": "#E30118",
+  "Ferrari": "#FFF200",
+  "McLaren": "#000000",
+  "Mercedes": "#000000",
+  "Aston Martin": "#FFFFFF",
+  "RB F1 Team": "#005CAA",
+  "Williams": "#000000",
+  "Sauber": "#000000",
+  "Haas F1 Team": "#E6002B",
+  "Alpine F1 Team": "#2173B8",
+};
+
 function Drivers() {
     const [drivers, setDrivers] = useState([]);
     const [search, setSearch] = useState("");
@@ -70,6 +96,16 @@ function Drivers() {
                     constructorName: constructorMap[d.driverId] || "—",
                 }));
 
+                // sort by team to render together
+                merged.sort((a, b) => {
+                    const teamA = a.constructorName || "";
+                    const teamB = b.constructorName || "";
+                    if (teamA < teamB) return -1;
+                    if (teamA > teamB) return 1;
+                    // If same team, sort by family name
+                    return a.familyName.localeCompare(b.familyName);
+                })
+
                 setDrivers(merged);
             })
             .catch(err => console.error(err))
@@ -94,25 +130,32 @@ function Drivers() {
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
-                {filtered.map(d => (
-                    <div key={d.driverId} onClick={() => setSelected(d)}
-                        // bg-[#1A1A1A]
-                        className="cursor-pointer bg-gray-200 p-4 rounded-xl border border-[#2C2C2C] hover:border-[#E10600] transition-colors"
-                    >
-                        <div className="flex items-center justify-between px-4 py-2">
-                            <div className="text-lg font-bold text-gray-900">
-                                {d.givenName} {d.familyName}
-                            </div>
-                            <div >
-                                <div className="text-sm font-semibold text-gray-800 mt-3">{d.constructorName}</div>
-                                <div className="text-sm font-semibold text-gray-800 mt-3">{d.nationality}</div>
-                                <div className="text-sm font-semibold text-gray-800 mt-3">
-                                    Number: {d.permanentNumber || "—"}
+                {filtered.map(d => {
+                    // background based on team color
+                    const bgColor = teamColors[d.constructorName] || "#1A1A1A";
+                    const textColor = teamColorsText[d.constructorName] || "#1A1A1A";
+
+                    return (
+                        <div key={d.driverId} onClick={() => setSelected(d)}
+                            // bg-[#1A1A1A]
+                            className="cursor-pointer p-4 rounded-xl border border-gray-400 transition-colors"
+                            style={{ backgroundColor: bgColor, color: textColor }}
+                        >
+                            <div className="flex flex-wrap items-center justify-between px-4 py-2">
+                                <div className="text-xl font-bold mb-4 pr-2">
+                                    {d.givenName} {d.familyName}
+                                </div>
+                                <div className="">
+                                    <div className="text-sm font-semibold mt-2">{d.constructorName}</div>
+                                    <div className="text-sm font-semibold mt-2">{d.nationality}</div>
+                                    <div className="text-sm font-semibold mt-2">
+                                        Number: {d.permanentNumber || "—"}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {selected && <DriverModal driver={selected} onClose={() => setSelected(null)} />}
