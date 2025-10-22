@@ -19,7 +19,7 @@ const LinkItem = ({ to, children }) => (
 
 function Sidebar() {
   return (
-    <aside className="w-64 sm:w-48  bg-[#060606] border-r border-gray-900 min-h-screen p-4 flex flex-col">
+    <aside className="w-64 sm:w-48 bg-[#060606] border-r border-gray-900 min-h-screen p-4 flex flex-col">
       <div className="mb-6">
         <div className="flex items-center text-2xl font-bold text-white"><SiF1 /><span className="text-[#e10600]">Dash</span></div>
         <div className="text-xs text-gray-400 mt-1">Season Dashboard</div>

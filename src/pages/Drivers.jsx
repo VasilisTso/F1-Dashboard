@@ -54,7 +54,7 @@ const teamColors = {
 };
 
 const teamColorsText = {
-  "Red Bull": "#E30118",
+  "Red Bull": "#FFFFFF", //red #df2739
   "Ferrari": "#FFF200",
   "McLaren": "#000000",
   "Mercedes": "#000000",

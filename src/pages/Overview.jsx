@@ -152,23 +152,23 @@ function Overview() {
 
         {/* Top Drivers section */}
         <section className="mt-10">
-            <h2 className="text-2xl font-semibold mb-4 border-l-4 border-[#E10600] pl-3">Top Drivers</h2>
-            <div className="grid grid-cols-1 gap-5">
-				{standings?.slice(0, 5).map(s => (
-					<DriverCard key={s.Driver.driverId} driverStanding={s} />
-				))}
-            </div>
+          <h2 className="text-2xl font-semibold mb-4 border-l-4 border-[#E10600] pl-3">Top Drivers</h2>
+          <div className="grid grid-cols-1 gap-5">
+            {standings?.slice(0, 5).map(s => (
+              <DriverCard key={s.Driver.driverId} driverStanding={s} />
+            ))}
+          </div>
         </section>
 
-		{/* Top Drivers section */}
-		<section className="mt-10">
-			<h2 className="text-2xl font-semibold mb-4 border-l-4 border-[#E10600] pl-3">Top Constructors</h2>
-			<div className="grid grid-cols-1 gap-5">
-				{constructors?.slice(0, 5).map(c => (
-				<ConstructorCard key={c.Constructor.constructorId} constructorStanding={c} />
-				))}
-			</div>
-		</section>
+        {/* Top Constructors section */}
+        <section className="mt-10">
+          <h2 className="text-2xl font-semibold mb-4 border-l-4 border-[#E10600] pl-3">Top Constructors</h2>
+          <div className="grid grid-cols-1 gap-5">
+            {constructors?.slice(0, 5).map(c => (
+            <ConstructorCard key={c.Constructor.constructorId} constructorStanding={c} />
+            ))}
+          </div>
+        </section>
 
     </div>
   );
