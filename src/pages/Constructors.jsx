@@ -3,6 +3,17 @@ import { getConstructorStandings } from "../api/jolpica";
 import { useNavigate } from "react-router-dom";
 import { RiTeamFill } from "react-icons/ri";
 import { GiTrophyCup } from "react-icons/gi";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
+} from "recharts";
 
 const teamColors = {
   "Red Bull": "#223971",
@@ -49,6 +60,8 @@ const ConstructorModal = ({ team, onClose }) => {
 
         let totalPoints = 0;
         let totalWins = 0;
+        // for chart
+        const yearlyPoints = [];
         
         // helper before your loop, add delay since there are too many requests
         const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,8 +80,10 @@ const ConstructorModal = ({ team, onClose }) => {
           const standing =
             data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings?.[0];
           if (standing) {
-            totalPoints += parseFloat(standing.points || 0);
+            const pts = parseFloat(standing.points || 0); // for chart
+            totalPoints += pts;
             totalWins += parseInt(standing.wins || 0);
+            yearlyPoints.push({ season: year, points: pts }); // for chart
           }
         }
 
@@ -81,6 +96,7 @@ const ConstructorModal = ({ team, onClose }) => {
           seasons: seasons.length,
           firstSeason,
           lastSeason,
+          yearlyPoints, // for chart
         });
       } catch (err) {
         console.error("Error fetching constructor history:", err);
@@ -128,21 +144,43 @@ const ConstructorModal = ({ team, onClose }) => {
           <h3 className="text-2xl font-bold mb-3">Team Lifetime Stats</h3>
           {loading && <p className="text-gray-400">Loading stats...</p>}
           {history && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <p>
-                <span className="font-semibold">Total Seasons:</span> {history.seasons}
-              </p>
-              <p>
-                <span className="font-semibold">Total Wins:</span> {history.totalWins}
-              </p>
-              <p>
-                <span className="font-semibold">Total Points:</span> {history.totalPoints.toFixed(1)}
-              </p>
-              <p>
-                <span className="font-semibold">Active Years:</span>{" "}
-                {history.firstSeason} → {history.lastSeason}
-              </p>
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <p>
+                  <span className="font-semibold">Total Seasons:</span> {history.seasons}
+                </p>
+                <p>
+                  <span className="font-semibold">Total Wins:</span> {history.totalWins}
+                </p>
+                <p>
+                  <span className="font-semibold">Total Points:</span> {history.totalPoints.toFixed(1)}
+                </p>
+                <p>
+                  <span className="font-semibold">Active Years:</span>{" "}
+                  {history.firstSeason} → {history.lastSeason}
+                </p>
+              </div>
+
+              {/* Chart Section */}
+              {history.yearlyPoints?.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold mb-3 text-center">
+                    Performance Trend (Points per Season)
+                  </h3>
+                  <div className="bg-[#0f0f0f] p-4 rounded-xl">
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={history.yearlyPoints}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="season" tick={{ fontSize: 10 }} />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="points" fill="#2563eb" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -276,8 +314,14 @@ function Constructors() {
             <div
               key={t.constructorId}
               onClick={() => setSelected(t)}
-              className="cursor-pointer p-4 rounded-xl border border-gray-400 transition-colors"
-              style={{ backgroundColor: bgColor, color: textColor }}
+              className="cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.05]"
+              style={{ backgroundColor: bgColor, color: textColor, boxShadow: `0 0 10px 0 ${bgColor}40`, }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = `0 0 25px 4px ${bgColor}60`; // brighter on hover
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = `0 0 10px 0 ${bgColor}40`; // revert glow
+              }}
             >
               <div className="flex flex-col items-start justify-between px-4 py-2">
                 <div className="text-xl font-bold mb-4">{t.name}</div>
