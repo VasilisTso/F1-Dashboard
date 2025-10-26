@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getDrivers, getDriverStandings } from "../api/jolpica";
-import { GiFullMotorcycleHelmet } from "react-icons/gi";
+import { GiFullMotorcycleHelmet, GiTrophyCup } from "react-icons/gi";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const DriverModal = ({ driver, onClose}) => {
@@ -72,6 +72,7 @@ function Drivers() {
     const [search, setSearch] = useState("");
     const [selected, setSelected] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [driverStandings, setDriverStandings] = useState([]);
 
     // detect ?team= param from URL Constructors page
     const location = useLocation();
@@ -114,6 +115,9 @@ function Drivers() {
                 })
 
                 setDrivers(merged);
+
+                // store standings separately for leaderboard
+                setDriverStandings(standingsList);
             })
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
@@ -134,7 +138,39 @@ function Drivers() {
 
     return (
         <div className="p-6">
-            
+            {/* DRIVER CHAMPIONSHIP LEADERBOARD */}
+            {driverStandings.length > 0 && (
+                <div className="bg-[#121212] rounded-2xl p-4 mb-6 border border-gray-700">
+                    <h2 className="text-xl font-semibold text-white mb-4">
+                        Drivers Championship 2025
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {driverStandings.map((driver) => {
+                            const d = driver.Driver;
+                            const teamName = driver.Constructors?.[0]?.name;
+                            const bgColor = teamColors[teamName] || "#1A1A1A";
+                            const textColor = teamColorsText[teamName] || "#FFFFFF";
+
+                            return (
+                                <div
+                                    key={d.driverId}
+                                    className="flex flex-wrap justify-between items-center rounded-lg px-4 py-2"
+                                    style={{ backgroundColor: bgColor, color: textColor }}
+                                >
+                                    <span className="text-lg font-bold">
+                                        {driver.position}. {d.givenName} {d.familyName}
+                                    </span>
+                                    <span className="text-md font-semibold flex items-center gap-2">
+                                        <GiTrophyCup className="text-yellow-400" /> {driver.points} pts
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+
             {/* Show banner if filtered by team */}
             {teamFilter && (
                 <div className="mb-6 text-gray-300">
@@ -169,8 +205,14 @@ function Drivers() {
                     return (
                         <div key={d.driverId} onClick={() => setSelected(d)}
                             // bg-[#1A1A1A]
-                            className="cursor-pointer p-4 rounded-xl border border-gray-400 transition-colors"
-                            style={{ backgroundColor: bgColor, color: textColor }}
+                            className="cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.05]"
+                            style={{ backgroundColor: bgColor, color: textColor, boxShadow: `0 0 10px 0 ${bgColor}40`, }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.boxShadow = `0 0 25px 4px ${bgColor}60`; // brighter on hover
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.boxShadow = `0 0 10px 0 ${bgColor}40`; // revert glow
+                            }}
                         >
                             <div className="flex flex-wrap items-center justify-between px-4 py-2">
                                 <div className="text-xl font-bold mb-4 pr-2">
