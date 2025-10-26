@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getDrivers, getDriverStandings } from "../api/jolpica";
 import { GiFullMotorcycleHelmet } from "react-icons/gi";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const DriverModal = ({ driver, onClose}) => {
     if (!driver) return null;
@@ -72,6 +73,12 @@ function Drivers() {
     const [selected, setSelected] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // detect ?team= param from URL Constructors page
+    const location = useLocation();
+    const navigate = useNavigate();
+    const queryParams = new URLSearchParams(location.search);
+    const teamFilter = queryParams.get("team") || "";
+
     useEffect(() => {
         Promise.all([
             getDrivers(),
@@ -112,15 +119,39 @@ function Drivers() {
             .finally(() => setLoading(false));
     }, [])
 
-    const filtered = drivers.filter(d => 
-        `${d.givenName} ${d.familyName}`.toLowerCase().includes(search.toLowerCase())
-    );
+    // Apply both search filter and team filter
+    const filtered = drivers.filter((d) => {
+        const matchesSearch = `${d.givenName} ${d.familyName}`
+            .toLowerCase()
+            .includes(search.toLowerCase());
+        const matchesTeam = teamFilter
+            ? d.constructorName?.toLowerCase() === teamFilter.toLowerCase()
+            : true;
+        return matchesSearch && matchesTeam;
+    });
 
     if (loading) return <div className="p-8 text-gray-300">Loading drivers...</div>;
 
     return (
         <div className="p-6">
-            <h1 className="flex items-center gap-2 text-white text-3xl font-bold mb-6"><GiFullMotorcycleHelmet />Drivers</h1>
+            
+            {/* Show banner if filtered by team */}
+            {teamFilter && (
+                <div className="mb-6 text-gray-300">
+                    Showing drivers for{" "}
+                    <span className="font-bold text-white">{teamFilter}</span>
+                    <button
+                        onClick={() => navigate("/drivers")}
+                        className="ml-3 text-[#E10600] underline text-sm hover:text-white cursor-pointer"
+                    >
+                        Clear filter
+                    </button>
+                </div>
+            )}
+            
+            <h1 className="flex items-center gap-2 text-white text-3xl font-bold mb-6">
+                <GiFullMotorcycleHelmet />Drivers
+            </h1>
 
             <input type="text" 
                 placeholder="Search driver"

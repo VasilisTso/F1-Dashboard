@@ -31,6 +31,67 @@ const teamColorsText = {
 };
 
 const ConstructorModal = ({ team, onClose }) => {
+  const [history, setHistory] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!team) return;
+
+    // fetch full history of constructor standings
+    const fetchHistory = async () => {
+      try {
+        // Step 1 — get list of seasons this team raced
+        const resSeasons = await fetch(
+          `https://api.jolpi.ca/ergast/f1/constructors/${team.constructorId}/seasons.json?limit=1000`
+        );
+        const dataSeasons = await resSeasons.json();
+        const seasons = dataSeasons?.MRData?.SeasonTable?.Seasons || [];
+
+        let totalPoints = 0;
+        let totalWins = 0;
+        
+        // helper before your loop, add delay since there are too many requests
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+        // Step 2 — loop through seasons to sum stats
+        for (const s of seasons) {
+          const year = s.season;
+
+          // 300 ms pause between each API call (adjust if needed)
+          await delay(500);
+
+          const res = await fetch(
+            `https://api.jolpi.ca/ergast/f1/${year}/constructors/${team.constructorId}/constructorStandings.json`
+          );
+          const data = await res.json();
+          const standing =
+            data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings?.[0];
+          if (standing) {
+            totalPoints += parseFloat(standing.points || 0);
+            totalWins += parseInt(standing.wins || 0);
+          }
+        }
+
+        const firstSeason = seasons[0]?.season || null;
+        const lastSeason = seasons[seasons.length - 1]?.season || null;
+
+        setHistory({
+          totalPoints,
+          totalWins,
+          seasons: seasons.length,
+          firstSeason,
+          lastSeason,
+        });
+      } catch (err) {
+        console.error("Error fetching constructor history:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [team]);
+
   if (!team) return null;
 
   return (
@@ -60,6 +121,29 @@ const ConstructorModal = ({ team, onClose }) => {
             <span className="font-semibold">Seasons Participated:</span>{" "}
             {team.seasons || "—"}
           </p>
+        </div>
+
+        {/* Lifetime Stats */}
+        <div className="mt-8">
+          <h3 className="text-2xl font-bold mb-3">Team Lifetime Stats</h3>
+          {loading && <p className="text-gray-400">Loading stats...</p>}
+          {history && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <p>
+                <span className="font-semibold">Total Seasons:</span> {history.seasons}
+              </p>
+              <p>
+                <span className="font-semibold">Total Wins:</span> {history.totalWins}
+              </p>
+              <p>
+                <span className="font-semibold">Total Points:</span> {history.totalPoints.toFixed(1)}
+              </p>
+              <p>
+                <span className="font-semibold">Active Years:</span>{" "}
+                {history.firstSeason} → {history.lastSeason}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-10">
@@ -207,7 +291,7 @@ function Constructors() {
                     e.stopPropagation();
                     navigate(`/drivers?team=${encodeURIComponent(t.name)}`);
                   }}
-                  className="mt-3 bg-gray-900 text-white px-3 py-1 rounded-md text-sm hover:bg-red-700"
+                  className="mt-3 bg-gray-900 text-white px-3 py-1 rounded-md text-sm hover:bg-gray-600 cursor-pointer"
                 >
                   View Drivers →
                 </button>
