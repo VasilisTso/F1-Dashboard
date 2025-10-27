@@ -5,7 +5,7 @@ function Races() {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const raceRefs = useRef({});
-  // added
+  
   const [selectedRace, setSelectedRace] = useState(null);
   const [nextRaceRound, setNextRaceRound] = useState(null);
 
@@ -17,7 +17,6 @@ function Races() {
         const races = data?.MRData?.RaceTable?.Races || [];
         setCalendar(races);
 
-        // added
         // Find next upcoming race
         const today = new Date();
         const next = races.find((r) => new Date(r.date) > today);
@@ -37,7 +36,6 @@ function Races() {
         }
         setResults(resultsData);
 
-        // added
         // Default select next race if exists, else last race
         setSelectedRace(next ? next.round : races[races.length - 1]?.round);
       } catch (err) {

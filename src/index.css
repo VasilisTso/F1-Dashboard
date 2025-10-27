@@ -10,3 +10,28 @@ html {
   font-family: "Outfit", sans-serif;
 }
 
+/* ===== Global Scrollbar Styling ===== */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px; /* For horizontal scrollbars */
+}
+
+::-webkit-scrollbar-track {
+  background: #111; /* Dark track */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #555; /* Subtle gray thumb */
+  border-radius: 10px;
+  border: 2px solid #111; /* Creates spacing */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #E10600; /* F1 red hover */
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #111;
+}
