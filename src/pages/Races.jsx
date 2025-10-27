@@ -5,6 +5,9 @@ function Races() {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const raceRefs = useRef({});
+  // added
+  const [selectedRace, setSelectedRace] = useState(null);
+  const [nextRaceRound, setNextRaceRound] = useState(null);
 
   useEffect(() => {
     const fetchRaces = async () => {
@@ -13,6 +16,12 @@ function Races() {
         const data = await res.json();
         const races = data?.MRData?.RaceTable?.Races || [];
         setCalendar(races);
+
+        // added
+        // Find next upcoming race
+        const today = new Date();
+        const next = races.find((r) => new Date(r.date) > today);
+        setNextRaceRound(next ? next.round : null);
 
         // Fetch results for each round sequentially
         const resultsData = {};
@@ -27,6 +36,10 @@ function Races() {
           resultsData[race.round] = roundData?.MRData?.RaceTable?.Races[0]?.Results || [];
         }
         setResults(resultsData);
+
+        // added
+        // Default select next race if exists, else last race
+        setSelectedRace(next ? next.round : races[races.length - 1]?.round);
       } catch (err) {
         console.error("Error fetching races:", err);
       } finally {
@@ -40,7 +53,15 @@ function Races() {
   const scrollToRace = (round) => {
     const element = raceRefs.current[round];
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      // Temporary highlight
+      element.classList.add("ring-2", "ring-[#E10600]");
+      setTimeout(() => element.classList.remove("ring-2", "ring-[#E10600]"), 1500);
+    } else {
+      console.log("No element found for round", round);
     }
   };
 
@@ -49,30 +70,47 @@ function Races() {
   return (
     <div className="p-4">
       {/* ===== Mini Calendar / Race Buttons (Wrapped, No Scroll) ===== */}
-      <div className="mb-8">
-        <div className="flex flex-wrap gap-3 justify-center">
-          {calendar.map((race) => (
-            <button
-              key={race.round}
-              onClick={() => scrollToRace(race.round)}
-              className="px-4 py-2 bg-[#1a1a1a] text-white rounded-3xl border border-gray-700 hover:bg-[#E10600] hover:text-white transition-colors duration-300 flex flex-col items-center text-center cursor-pointer"
-            >
-              <span className="text-sm font-semibold whitespace-nowrap">
-                Round {race.round}: {race.raceName}
-              </span>
-              <span className="text-xs text-gray-400">
-                {race.Circuit.Location.locality}, {race.Circuit.Location.country}
-              </span>
-              <span className="text-xs text-gray-500">{race.date}</span>
-            </button>
-          ))}
+      <div className="mb-8 bg-[#1a1a1a] rounded-2xl p-4 shadow-md border border-gray-900">
+        <h2 className="text-lg font-semibold flex justify-center border-b border-gray-800 text-white mb-4">Race Calendar</h2>
+        <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-[#E10600]/70 scrollbar-track-[#111] rounded-md pr-2">
+          <div className="flex flex-wrap justify-center gap-3">
+            {calendar.map((race) => {
+              const isSelected = selectedRace === race.round;
+              const isNext = nextRaceRound === race.round;
+              
+              return (
+                <button
+                  key={race.round}
+                  onClick={() => scrollToRace(race.round)}
+                  className={`px-3 py-2 rounded-xl transition-all duration-300 flex flex-col items-center text-center text-sm cursor-pointer w-[140px]
+                    ${
+                      isSelected
+                        ? "bg-red-950 text-white shadow-md hover:bg-red-900"
+                        : "bg-[#333] text-gray-300 hover:bg-[#444]"
+                    }
+                    ${isNext ? "border border-gray-500 shadow-[0_0_6px_#E10600]" : ""}
+                  `}    
+                >
+                  <span className="font-semibold">
+                    Race {race.round}
+                  </span>
+                  <span className="text-xs text-gray-400 truncate w-full">
+                    {race.Circuit.Location.locality}
+                  </span>
+                  <span className="text-xs text-gray-500">{race.date}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
+      {/* ===== Races Grid ===== */}
       <div className="p-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {calendar.map((race) => (
           <div
             key={race.round}
+            ref={(el) => (raceRefs.current[race.round] = el)}
             className="bg-[#1a1a1a] text-white p-5 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
           >
             {/* Race Header */}
@@ -100,7 +138,7 @@ function Races() {
                         {r.position}. {r.Driver.givenName} {r.Driver.familyName} (
                         {r.Constructor.name})
                       </span>
-                      <span className="font-semibold text-yellow-300">{r.points} pts</span>
+                      <span className="font-semibold text-yellow-600">{r.points} pts</span>
                     </li>
                   ))}
                 </ul>
