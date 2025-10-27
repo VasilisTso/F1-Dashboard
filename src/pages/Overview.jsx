@@ -61,19 +61,19 @@ function Overview() {
       getDriverStandings(),
       getNextRace(),
       getLastRaceResults(),
-	  getConstructorStandings()
+	    getConstructorStandings()
     ]).then(([standRes, nextRes, lastRes, constructorRes]) => {
       if (!mounted) return;
       try {
         const driverStandings = (standRes?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings) || [];
         const constructorStandings = (constructorRes?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings) || [];
-		const nextRaceInfo = (nextRes?.MRData?.RaceTable?.Races?.[0]) || null;
+		    const nextRaceInfo = (nextRes?.MRData?.RaceTable?.Races?.[0]) || null;
         const lastRaceResults = (lastRes?.MRData?.RaceTable?.Races?.[0]) || null;
         
-		setStandings(driverStandings);
+		    setStandings(driverStandings);
         setNextRace(nextRaceInfo);
         setLastResults(lastRaceResults);
-		setConstructors(constructorStandings);
+		    setConstructors(constructorStandings);
       } catch (e) {
         setErr(e);
       } finally {
@@ -99,28 +99,28 @@ function Overview() {
 
             {/* Next-Last Race */}
             <div className="flex flex-wrap gap-4">
-            <StatCard title="Next Race">
-                {nextRace ? (
-                <div className="">
-                    <div className="font-bold text-white">{nextRace.raceName}</div>
-                    <div className="text-sm text-gray-300">
-                    {nextRace.Circuit?.Location?.locality}, {nextRace.Circuit?.Location?.country}
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                    Date: {nextRace.date} {nextRace.time || ""}
-                    </div>
-                </div>
-                ) : <div>—</div>}
-            </StatCard>
+              <StatCard title="Next Race">
+                  {nextRace ? (
+                  <div className="">
+                      <div className="font-bold text-white">{nextRace.raceName}</div>
+                      <div className="text-sm text-gray-300">
+                        {nextRace.Circuit?.Location?.locality}, {nextRace.Circuit?.Location?.country}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Date: {nextRace.date} {nextRace.time || ""}
+                      </div>
+                  </div>
+                  ) : <div>—</div>}
+              </StatCard>
 
-            <StatCard title="Last Race">
-                {lastResults ? (
-                <>
-                    <div className="font-bold text-white">{lastResults.raceName}</div>
-                    <div className="text-sm text-gray-300">{lastResults.Circuit?.circuitName}</div>
-                </>
-                ) : <div>—</div>}
-            </StatCard>
+              <StatCard title="Last Race">
+                  {lastResults ? (
+                  <>
+                      <div className="font-bold text-white">{lastResults.raceName}</div>
+                      <div className="text-sm text-gray-300">{lastResults.Circuit?.circuitName}</div>
+                  </>
+                  ) : <div>—</div>}
+              </StatCard>
             </div>
         </header>
 
