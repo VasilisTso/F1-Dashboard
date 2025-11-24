@@ -131,14 +131,14 @@ function Overview() {
                 {lastResults?.Results?.slice(0,3).map((r) => (
                     <div key={r.position} className="bg-[#1A1A1A] p-5 rounded-xl border border-[#2C2C2C] hover:border-[#E10600] transition-colors">
                         <div className={`flex items-center gap-2 text-xl font-bold mb-1 ${
-							r.position === "1"
-							? "text-yellow-400" // gold
-							: r.position === "2"
-							? "text-gray-300" // silver
-							: r.position === "3"
-							? "text-amber-700" // bronze
-							: "text-white"
-						}`}>
+                          r.position === "1"
+                          ? "text-yellow-400" // gold
+                          : r.position === "2"
+                          ? "text-gray-300" // silver
+                          : r.position === "3"
+                          ? "text-amber-700" // bronze
+                          : "text-white"
+                        }`}>
                             {r.position} — {r.Driver.givenName} {r.Driver.familyName}
                         </div>
                         <div className="text-sm text-gray-300">{r.Constructor.name}</div>

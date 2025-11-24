@@ -42,7 +42,7 @@ const DriverModal = ({ driver, onClose}) => {
 };
 
 const teamColors = {
-  "Red Bull": "#223971",
+  "Red Bull": "#264287",
   "Ferrari": "#EF1A2D",
   "McLaren": "#FF8000",
   "Mercedes": "#00A19B",
@@ -51,7 +51,7 @@ const teamColors = {
   "RB F1 Team": "#FFFFFF",
   "Sauber": "#01C00E",
   "Haas F1 Team": "#9C9FA2",
-  "Alpine F1 Team": "#02192B",
+  "Alpine F1 Team": "#960963",
 };
 
 const teamColorsText = {
@@ -148,20 +148,19 @@ function Drivers() {
                         {driverStandings.map((driver) => {
                             const d = driver.Driver;
                             const teamName = driver.Constructors?.[0]?.name;
-                            const bgColor = teamColors[teamName] || "#1A1A1A";
-                            const textColor = teamColorsText[teamName] || "#FFFFFF";
+                            const teamColor = teamColors[teamName] || "#1A1A1A";
 
                             return (
                                 <div
                                     key={d.driverId}
-                                    className="flex flex-wrap justify-between items-center rounded-lg px-4 py-2"
-                                    style={{ backgroundColor: bgColor, color: textColor }}
+                                    className="bg-[#1A1A1A] flex flex-wrap justify-between items-center border rounded-lg px-4 py-4"
+                                    style={{borderColor: teamColor }}
                                 >
-                                    <span className="text-lg font-bold">
+                                    <span className="text-2xl font-bold"  style={{color: teamColor}}>
                                         {driver.position}. {d.givenName} {d.familyName}
                                     </span>
-                                    <span className="text-md font-semibold flex items-center gap-2">
-                                        <GiTrophyCup className="text-yellow-400" /> {driver.points} pts
+                                    <span className="text-lg text-yellow-400 font-semibold flex items-center gap-2">
+                                        <GiTrophyCup /> {driver.points} pts
                                     </span>
                                 </div>
                             );
@@ -199,29 +198,28 @@ function Drivers() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
                 {filtered.map(d => {
                     // background based on team color
-                    const bgColor = teamColors[d.constructorName] || "#1A1A1A";
-                    const textColor = teamColorsText[d.constructorName] || "#1A1A1A";
+                    const teamColor = teamColors[d.constructorName] || "#1A1A1A";
 
                     return (
                         <div key={d.driverId} onClick={() => setSelected(d)}
                             // bg-[#1A1A1A]
-                            className="cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.05]"
-                            style={{ backgroundColor: bgColor, color: textColor, boxShadow: `0 0 10px 0 ${bgColor}40`, }}
+                            className="bg-[#1A1A1A] cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.02]"
+                            style={{color: teamColor, borderColor: teamColor, boxShadow: `0 0 10px 0 ${teamColor}40`, }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.boxShadow = `0 0 25px 4px ${bgColor}60`; // brighter on hover
+                                e.currentTarget.style.boxShadow = `0 0 25px 4px ${teamColor}60`; // brighter on hover
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.boxShadow = `0 0 10px 0 ${bgColor}40`; // revert glow
+                                e.currentTarget.style.boxShadow = `0 0 10px 0 ${teamColor}40`; // revert glow
                             }}
                         >
-                            <div className="flex flex-wrap items-center justify-between px-4 py-2">
-                                <div className="text-xl font-bold mb-4 pr-2">
+                            <div className="flex flex-wrap items-center justify-between px-4 py-1">
+                                <div className="text-2xl font-bold mb-4 pr-2">
                                     {d.givenName} {d.familyName}
                                 </div>
                                 <div className="">
-                                    <div className="text-sm font-semibold mt-2">{d.constructorName}</div>
-                                    <div className="text-sm font-semibold mt-2">{d.nationality}</div>
-                                    <div className="text-sm font-semibold mt-2">
+                                    <div className="text-xl font-semibold mt-2">{d.constructorName}</div>
+                                    <div className="text-xl font-semibold mt-2">{d.nationality}</div>
+                                    <div className="text-xl font-semibold mt-2">
                                         Number: {d.permanentNumber || "—"}
                                     </div>
                                 </div>

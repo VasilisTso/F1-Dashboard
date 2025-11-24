@@ -16,7 +16,7 @@ import {
 } from "recharts";
 
 const teamColors = {
-  "Red Bull": "#223971",
+  "Red Bull": "#264287",
   "Ferrari": "#EF1A2D",
   "McLaren": "#FF8000",
   "Mercedes": "#00A19B",
@@ -25,7 +25,7 @@ const teamColors = {
   "RB F1 Team": "#FFFFFF",
   "Sauber": "#01C00E",
   "Haas F1 Team": "#9C9FA2",
-  "Alpine F1 Team": "#02192B",
+  "Alpine F1 Team": "#960963",
 };
 
 const teamColorsText = {
@@ -274,17 +274,16 @@ function Constructors() {
         </h2>
         <div className="space-y-2">
           {ranked.map((team) => {
-            const bgColor = teamColors[team.name] || "#1A1A1A";
-            const textColor = teamColorsText[team.name] || "#1A1A1A";
+            const teamColor = teamColors[team.name] || "#1A1A1A";
 
             return (
               <div
                 key={team.constructorId}
-                className="flex justify-between items-center rounded-lg px-4 py-2"
-                style={{ backgroundColor: bgColor, color: textColor }}
+                className="bg-[#1A1A1A] flex justify-between items-center border rounded-lg px-4 py-2"
+                style={{ borderColor: teamColor }}
               >
-                <span className="text-xl font-bold pr-2">{team.position}. {team.name}</span>
-                <span className="text-md font-semibold flex flex-col items-center"><span className="text-black"><GiTrophyCup /></span> {team.points} pts </span>
+                <span className="text-2xl font-bold pr-2" style={{ color: teamColor }}>{team.position}. {team.name}</span>
+                <span className="text-md font-semibold flex flex-col items-center text-yellow-400"><span className=""><GiTrophyCup /></span> {team.points} pts </span>
               </div>
             );
           })}
@@ -307,27 +306,26 @@ function Constructors() {
       {/* GRID OF TEAM CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
         {filtered.map((t) => {
-          const bgColor = teamColors[t.name] || "#1A1A1A";
-          const textColor = teamColorsText[t.name] || "#FFFFFF";
+          const teamColor = teamColors[t.name] || "#1A1A1A";
 
           return (
             <div
               key={t.constructorId}
               onClick={() => setSelected(t)}
-              className="cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.05]"
-              style={{ backgroundColor: bgColor, color: textColor, boxShadow: `0 0 10px 0 ${bgColor}40`, }}
+              className="bg-[#1A1A1A] cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.02]"
+              style={{ color: teamColor, borderColor: teamColor, boxShadow: `0 0 10px 0 ${teamColor}40`, }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = `0 0 25px 4px ${bgColor}60`; // brighter on hover
+                e.currentTarget.style.boxShadow = `0 0 25px 4px ${teamColor}60`; // brighter on hover
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = `0 0 10px 0 ${bgColor}40`; // revert glow
+                e.currentTarget.style.boxShadow = `0 0 10px 0 ${teamColor}40`; // revert glow
               }}
             >
               <div className="flex flex-col items-start justify-between px-4 py-2">
-                <div className="text-xl font-bold mb-4">{t.name}</div>
-                <div className="text-sm font-semibold mt-2">Nationality: {t.nationality}</div>
-                <div className="text-sm font-semibold mt-2">Wins: {t.wins}</div>
-                <div className="text-sm font-semibold mt-2">Position: {t.position}</div>
+                <div className="text-2xl font-bold mb-4">{t.name}</div>
+                <div className="text-lg font-semibold mt-2">Nationality: {t.nationality}</div>
+                <div className="text-lg font-semibold mt-2">Wins: {t.wins}</div>
+                <div className="text-lg font-semibold mt-2">Position: {t.position}</div>
 
                 {/* Link to drivers page */}
                 <button
@@ -335,7 +333,7 @@ function Constructors() {
                     e.stopPropagation();
                     navigate(`/drivers?team=${encodeURIComponent(t.name)}`);
                   }}
-                  className="mt-3 bg-gray-900 text-white px-3 py-1 rounded-md text-sm hover:bg-gray-600 cursor-pointer"
+                  className="mt-3 bg-gray-600 text-white px-3 py-1 rounded-md text-md hover:bg-gray-600 cursor-pointer"
                 >
                   View Drivers →
                 </button>
