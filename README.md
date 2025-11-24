@@ -19,8 +19,11 @@ A modern web application that provides an interactive Formula 1 experience, disp
 
 ## Preview
 <img width="1918" height="907" alt="Screenshot 2025-10-27 204603" src="https://github.com/user-attachments/assets/a1e9d39c-b470-446c-b89a-344d6b5ffa4f" />
-<img width="1915" height="904" alt="Screenshot 2025-10-27 204630" src="https://github.com/user-attachments/assets/8cd23196-fd35-41fd-a7e6-fe8ae3931afb" />
-<img width="1916" height="905" alt="Screenshot 2025-10-27 204705" src="https://github.com/user-attachments/assets/5fa84288-bb87-419e-8897-d62ec0dd385d" />
-<img width="1915" height="907" alt="Screenshot 2025-10-27 204717" src="https://github.com/user-attachments/assets/0f1e33ca-4f96-4259-96c8-4cc9e773daa1" />
-<img width="1917" height="910" alt="Screenshot 2025-10-27 204733" src="https://github.com/user-attachments/assets/c62a0ced-62ce-44ed-a643-2fd659f18d4a" />
+
+<img width="1919" height="908" alt="Screenshot 2025-11-24 194608" src="https://github.com/user-attachments/assets/b1f262e6-2e33-49f3-a898-b37be7db8ee7" />
+<img width="1918" height="911" alt="Screenshot 2025-11-24 194624" src="https://github.com/user-attachments/assets/6e68f893-9ee0-4d5e-831e-b0021bf4debc" />
+
+<img width="1910" height="695" alt="Screenshot 2025-11-24 194649" src="https://github.com/user-attachments/assets/ba9750e1-1d9b-47d0-9bb0-9ca0d7b80c72" />
+<img width="1919" height="909" alt="Screenshot 2025-11-24 194703" src="https://github.com/user-attachments/assets/7bd722c1-c4e1-467b-aa6a-3fee5253dcbc" />
+
 <img width="1914" height="913" alt="Screenshot 2025-10-27 204756" src="https://github.com/user-attachments/assets/461f718a-ba83-42f4-8380-9ce8eda3c37f" />
