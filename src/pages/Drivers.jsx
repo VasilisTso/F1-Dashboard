@@ -55,19 +55,6 @@ const teamColors = {
   "Cadillac F1 Team": "#FFB81C"
 };
 
-const teamColorsText = {
-  "Red Bull": "#FFFFFF", //red #df2739
-  "Ferrari": "#FFF200",
-  "McLaren": "#000000",
-  "Mercedes": "#000000",
-  "Aston Martin": "#FFFFFF",
-  "RB F1 Team": "#005CAA",
-  "Williams": "#000000",
-  "Sauber": "#000000",
-  "Haas F1 Team": "#E6002B",
-  "Alpine F1 Team": "#2173B8",
-};
-
 function Drivers() {
     const [drivers, setDrivers] = useState([]);
     const [search, setSearch] = useState("");
