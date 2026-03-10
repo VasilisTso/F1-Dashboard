@@ -23,9 +23,10 @@ const teamColors = {
   "Aston Martin": "#037A68",
   "Williams": "#1868DB",
   "RB F1 Team": "#FFFFFF",
-  "Sauber": "#01C00E",
   "Haas F1 Team": "#9C9FA2",
   "Alpine F1 Team": "#960963",
+  "Audi": "#F50537",
+  "Cadillac F1 Team": "#FFB81C"
 };
 
 const teamColorsText = {

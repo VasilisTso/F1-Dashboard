@@ -49,9 +49,10 @@ const teamColors = {
   "Aston Martin": "#037A68",
   "Williams": "#1868DB",
   "RB F1 Team": "#FFFFFF",
-  "Sauber": "#01C00E",
   "Haas F1 Team": "#9C9FA2",
   "Alpine F1 Team": "#960963",
+  "Audi": "#F50537",
+  "Cadillac F1 Team": "#FFB81C"
 };
 
 const teamColorsText = {
@@ -145,7 +146,7 @@ function Drivers() {
                         Drivers Championship 2025
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {driverStandings.map((driver) => {
+                        {driverStandings.map((driver, index) => {
                             const d = driver.Driver;
                             const teamName = driver.Constructors?.[0]?.name;
                             const teamColor = teamColors[teamName] || "#1A1A1A";
@@ -157,7 +158,7 @@ function Drivers() {
                                     style={{borderColor: teamColor }}
                                 >
                                     <span className="text-2xl font-bold"  style={{color: teamColor}}>
-                                        {driver.position}. {d.givenName} {d.familyName}
+                                        {driver.position || index + 1}. {d.givenName} {d.familyName}
                                     </span>
                                     <span className="text-lg text-yellow-400 font-semibold flex items-center gap-2">
                                         <GiTrophyCup /> {driver.points} pts
