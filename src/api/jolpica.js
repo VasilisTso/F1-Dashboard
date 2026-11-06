@@ -113,35 +113,88 @@ export const getConstructorSeasons = async (constructorId) =>
     (s) => s.season
   );
 
+// All-time totals via cheap `?limit=1` calls (seasons come from getConstructorSeasons).
 export const getConstructorCareer = async (constructorId) => {
   const base = `/constructors/${constructorId}`;
-  const [races, wins, poles, drivers, years] = await Promise.all([
+  const [races, wins, poles, drivers] = await Promise.all([
     count(`${base}/races.json`),
     count(`${base}/results/1.json`),
     count(`${base}/qualifying/1.json`),
     count(`${base}/drivers.json`),
-    getConstructorSeasons(constructorId),
   ]);
-  return {
-    races,
-    wins,
-    poles,
-    drivers,
-    seasons: years.length,
-    firstSeason: years[0] ?? null,
-    lastSeason: years.at(-1) ?? null,
-  };
+  return { races, wins, poles, drivers };
 };
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Long sequential runs eventually hit Jolpica's rate limit; back off and retry that one request
+// instead of failing (and later restarting) the whole run.
+const getWithRetry = async (path, tries = 4) => {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await get(path);
+    } catch (err) {
+      if (attempt >= tries - 1) throw err;
+      await sleep(4000 * 2 ** attempt);
+    }
+  }
+};
+
+// Finished seasons never change, so their rows are kept in localStorage: a team's history costs
+// its requests once per browser, not once per visit. Storage failures just mean refetching.
+const FINAL_BEFORE = new Date().getFullYear();
+const seasonKey = (constructorId, season) => `f1:constructorSeason:${constructorId}:${season}`;
+const readSeason = (constructorId, season) => {
+  if (Number(season) >= FINAL_BEFORE) return undefined;
+  try {
+    const raw = localStorage.getItem(seasonKey(constructorId, season));
+    return raw == null ? undefined : JSON.parse(raw); // null = team didn't score that season
+  } catch {
+    return undefined;
+  }
+};
+const writeSeason = (constructorId, season, row) => {
+  if (Number(season) >= FINAL_BEFORE) return;
+  try {
+    localStorage.setItem(seasonKey(constructorId, season), JSON.stringify(row));
+  } catch {
+    // Quota or private mode: fine, it will be refetched next time.
+  }
+};
+
+// True when every given season is already stored, i.e. loading them costs no requests.
+export const areSeasonsCached = (constructorId, seasons) =>
+  seasons.every((season) => readSeason(constructorId, season) !== undefined);
 
 // One standings row per season (no cross-season endpoint exists). Requests go through the
 // global throttle; `onProgress` receives each finished season so callers can render progressively.
-export const getConstructorSeasonPoints = async (constructorId, seasons, onProgress) => {
+// `known` ({ [season]: row }) skips seasons already fetched, so a retry resumes where it stopped.
+// Seasons before 1958 (no constructors' championship) return nothing and are skipped.
+export const getConstructorSeasonPoints = async (constructorId, seasons, onProgress, known = {}) => {
   const rows = [];
   for (const season of seasons) {
-    const data = await get(`/${season}/constructors/${constructorId}/constructorStandings.json`);
+    const cached = known[season] ?? readSeason(constructorId, season);
+    if (cached !== undefined) {
+      if (cached) {
+        rows.push(cached);
+        if (!known[season]) onProgress?.(cached);
+      }
+      continue;
+    }
+    const data = await getWithRetry(`/${season}/constructors/${constructorId}/constructorStandings.json`);
     const s = data.StandingsTable.StandingsLists[0]?.ConstructorStandings[0];
-    if (s) {
-      const row = { season, points: Number(s.points), wins: Number(s.wins), position: Number(s.position) };
+    const row = s
+      ? {
+          season,
+          points: Number(s.points),
+          wins: Number(s.wins),
+          position: Number(s.position),
+          // A current-year P1 is a lead, not a title (yet).
+          inProgress: Number(season) >= FINAL_BEFORE,
+        }
+      : null;
+    writeSeason(constructorId, season, row);
+    if (row) {
       rows.push(row);
       onProgress?.(row);
     }

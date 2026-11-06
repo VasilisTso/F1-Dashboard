@@ -1,226 +1,166 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useConstructorHistory, useConstructorStandings } from "../hooks/queries";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { LuSearch, LuArrowRight } from "react-icons/lu";
+import { useConstructorStandings } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
-import { getTeamColor } from "../lib/teams";
-import { RiTeamFill } from "react-icons/ri";
-import { GiTrophyCup } from "react-icons/gi";
 import {
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  BarChart,
-  Bar,
-} from "recharts";
+  Card,
+  PageHeader,
+  SkeletonRows,
+  Skeleton,
+  ErrorState,
+  StandingsList,
+  StandingsRow,
+  TeamStripe,
+} from "../components/ui";
 
-const ConstructorModal = ({ team, onClose }) => {
-  const { data: yearlyPoints, isPending: loading, error } = useConstructorHistory(team?.constructorId);
+const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
 
-  const history = yearlyPoints && {
-    totalPoints: yearlyPoints.reduce((sum, y) => sum + y.points, 0),
-    totalWins: yearlyPoints.reduce((sum, y) => sum + y.wins, 0),
-    seasons: yearlyPoints.length,
-    firstSeason: yearlyPoints[0]?.season ?? null,
-    lastSeason: yearlyPoints.at(-1)?.season ?? null,
-    yearlyPoints,
-  };
-
-  if (!team) return null;
-
+function TeamCard({ team, profileTo, driversTo }) {
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-[#1a1a1a] text-white p-6 rounded-2xl w-11/12 md:w-1/2 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-red-600 hover:text-white text-2xl cursor-pointer"
+    <li className="relative flex flex-col rounded-panel border border-line bg-surface-2 shadow-raised transition-colors duration-150 hover:border-line-strong">
+      <div className="flex items-start gap-3 p-4">
+        <TeamStripe constructorId={team.constructorId} className="h-12" />
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-display text-2xl uppercase text-ink">
+            {/* Stretched link: the whole card opens the profile; the drivers link sits above it. */}
+            <Link to={profileTo} className="after:absolute after:inset-0 after:rounded-panel">
+              {team.name}
+            </Link>
+          </h3>
+          <p className="text-sm text-ink-2">{team.nationality}</p>
+        </div>
+        <span className="font-display text-3xl text-ink-3">
+          <span className="sr-only">Position </span>
+          <span aria-hidden>P</span>
+          {team.position}
+        </span>
+      </div>
+      <dl className="grid grid-cols-2 border-t border-line">
+        <div className="px-4 py-3">
+          <dt className="label-caps">Points</dt>
+          <dd className="font-display mt-1 text-2xl text-ink">{formatPoints(team.points)}</dd>
+        </div>
+        <div className="border-l border-line px-4 py-3">
+          <dt className="label-caps">Wins</dt>
+          <dd className="font-display mt-1 text-2xl text-ink">{team.wins}</dd>
+        </div>
+      </dl>
+      <div className="mt-auto flex items-center justify-between gap-2 border-t border-line px-4 py-2">
+        <Link
+          to={driversTo}
+          className="relative z-10 inline-flex h-10 items-center rounded-panel px-2 -ml-2 text-sm font-medium text-ink-2 hover:bg-surface-3 hover:text-ink transition-colors duration-150"
         >
-          ✕
-        </button>
-
-        <h2 className="text-3xl font-bold mb-2">{team.name}</h2>
-        <p className="text-gray-400 mb-4">Constructor ID: {team.constructorId}</p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <p>
-            <span className="font-semibold">Nationality:</span> {team.nationality}
-          </p>
-          <p>
-            <span className="font-semibold">Wins:</span> {team.wins}
-          </p>
-          <p>
-            <span className="font-semibold">Position:</span> {team.position}
-          </p>
-        </div>
-
-        {/* Lifetime Stats */}
-        <div className="mt-8">
-          <h3 className="text-2xl font-bold mb-3">Team Lifetime Stats</h3>
-          {loading && <p className="text-gray-400">Loading stats...</p>}
-          {error && <p className="text-red-400">Couldn't load history: {error.message}</p>}
-          {history && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <p>
-                  <span className="font-semibold">Total Seasons:</span> {history.seasons}
-                </p>
-                <p>
-                  <span className="font-semibold">Total Wins:</span> {history.totalWins}
-                </p>
-                <p>
-                  <span className="font-semibold">Total Points:</span> {history.totalPoints.toFixed(1)}
-                </p>
-                <p>
-                  <span className="font-semibold">Active Years:</span>{" "}
-                  {history.firstSeason} → {history.lastSeason}
-                </p>
-              </div>
-
-              {/* Chart Section */}
-              {history.yearlyPoints?.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold mb-3 text-center">
-                    Performance Trend (Points per Season)
-                  </h3>
-                  <div className="bg-[#0f0f0f] p-4 rounded-xl">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={history.yearlyPoints}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="season" tick={{ fontSize: 10 }} />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="points" fill="#2563eb" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="mt-10">
-          <a
-            href={team.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#E10600] hover:underline"
-          >
-            View Team Profile →
-          </a>
-        </div>
+          Drivers
+        </Link>
+        <span className="inline-flex items-center gap-1 text-sm font-medium text-ink" aria-hidden>
+          See more <LuArrowRight className="size-4" />
+        </span>
       </div>
-    </div>
-  );
-};
-
-function Constructors() {
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
-  const navigate = useNavigate();
-  const { withSeason } = useSeason();
-  const { data, isPending, error } = useConstructorStandings();
-
-  if (isPending) return <div className="p-8 text-gray-300">Loading constructors...</div>;
-  if (error) return <div className="p-8 text-red-400">Error: {String(error.message || error)}</div>;
-
-  const constructors = data.standings.map((item) => ({
-    ...item.Constructor,
-    points: item.points,
-    wins: item.wins,
-    position: item.position,
-  }));
-
-  const ranked = [...constructors].sort(
-    (a, b) => parseFloat(b.points) - parseFloat(a.points)
-  );
-
-  const filtered = constructors.filter(c =>
-  c.name.toLowerCase().includes(search.toLowerCase())
-);
-
-  return (
-    <div className="p-6">
-      {/* LEADERBOARD SECTION */}
-      <div className="bg-[#121212] rounded-2xl p-4 mb-8 border border-gray-700">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          Constructors Championship {data.season}
-        </h2>
-        <div className="space-y-2">
-          {ranked.map((team) => {
-            const teamColor = getTeamColor(team.constructorId);
-
-            return (
-              <div
-                key={team.constructorId}
-                className="bg-[#1A1A1A] flex justify-between items-center border rounded-lg px-4 py-2"
-                style={{ borderColor: teamColor }}
-              >
-                <span className="text-2xl font-bold pr-2" style={{ color: teamColor }}>{team.position}. {team.name}</span>
-                <span className="text-md font-semibold flex flex-col items-center text-yellow-400"><span className=""><GiTrophyCup /></span> {team.points} pts </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <h1 className="flex items-center gap-2 text-white text-3xl font-bold mb-8">
-        <RiTeamFill /> Constructors
-      </h1>
-
-      {/* SEARCH INPUT */}
-      <input
-        type="text"
-        placeholder="Search team"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full md:w-1/2 p-2 rounded-lg [#121212] border border-gray-700 text-white mb-10 focus:outline-none focus:ring-1 focus:ring-[#E10600]"
-      />
-
-      {/* GRID OF TEAM CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
-        {filtered.map((t) => {
-          const teamColor = getTeamColor(t.constructorId);
-
-          return (
-            <div
-              key={t.constructorId}
-              onClick={() => setSelected(t)}
-              className="bg-[#1A1A1A] cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.02]"
-              style={{ color: teamColor, borderColor: teamColor, boxShadow: `0 0 10px 0 ${teamColor}40`, }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = `0 0 25px 4px ${teamColor}60`; // brighter on hover
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = `0 0 10px 0 ${teamColor}40`; // revert glow
-              }}
-            >
-              <div className="flex flex-col items-start justify-between px-4 py-2">
-                <div className="text-2xl font-bold mb-4">{t.name}</div>
-                <div className="text-lg font-semibold mt-2">Nationality: {t.nationality}</div>
-                <div className="text-lg font-semibold mt-2">Wins: {t.wins}</div>
-                <div className="text-lg font-semibold mt-2">Position: {t.position}</div>
-
-                {/* Link to drivers page */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(withSeason("/drivers", { team: t.constructorId }));
-                  }}
-                  className="mt-3 bg-gray-600 text-white px-3 py-1 rounded-md text-md hover:bg-gray-600 cursor-pointer"
-                >
-                  View Drivers →
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {selected && <ConstructorModal team={selected} onClose={() => setSelected(null)} />}
-    </div>
+    </li>
   );
 }
 
-export default Constructors
+function Constructors() {
+  const [search, setSearch] = useState("");
+  const { withSeason } = useSeason();
+  const { data, isPending, error, refetch } = useConstructorStandings();
+
+  if (error) {
+    return (
+      <>
+        <PageHeader title="Constructors" />
+        <ErrorState onRetry={refetch} />
+      </>
+    );
+  }
+
+  const standings = data?.standings ?? [];
+  const teams = standings.map((s) => ({ ...s.Constructor, points: s.points, wins: s.wins, position: s.position }));
+  const leaderPoints = Number(teams[0]?.points ?? 0);
+  const query = search.trim().toLowerCase();
+  const filtered = teams.filter(
+    (t) => t.name.toLowerCase().includes(query) || t.nationality.toLowerCase().includes(query),
+  );
+
+  const meta = isPending
+    ? "Loading standings…"
+    : data.season
+      ? `${data.season} season · after round ${data.round}`
+      : "No standings yet for this season";
+
+  return (
+    <>
+      <PageHeader title="Constructors" meta={meta} />
+
+      <Card title="Championship standings" bodyClassName="py-3" className="mb-8">
+        {isPending ? (
+          <SkeletonRows rows={10} label="Loading constructor standings" />
+        ) : teams.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-ink-2">No races have been scored yet.</p>
+        ) : (
+          <StandingsList label="Team" showExtra="Wins" linked>
+            {teams.map((t) => (
+              <StandingsRow
+                key={t.constructorId}
+                position={t.position}
+                constructorId={t.constructorId}
+                name={t.name}
+                sub={t.nationality}
+                points={t.points}
+                gap={leaderPoints - Number(t.points)}
+                extra={t.wins}
+                to={withSeason(`/constructors/${t.constructorId}`)}
+              />
+            ))}
+          </StandingsList>
+        )}
+      </Card>
+
+      <section aria-labelledby="teams-heading">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="teams-heading" className="font-display text-2xl uppercase text-ink">
+            Teams
+          </h2>
+          <label className="relative w-full sm:w-72">
+            <span className="sr-only">Search teams</span>
+            <LuSearch
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+              aria-hidden
+            />
+            <input
+              type="search"
+              placeholder="Search team or nationality"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-10 w-full rounded-panel border border-line-strong bg-surface-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-3 hover:border-ink-3"
+            />
+          </label>
+        </div>
+
+        {isPending ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="h-44" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <ErrorState tone="empty" title="No teams match" message={`Nothing matches “${search}”.`} />
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((t) => (
+              <TeamCard
+                key={t.constructorId}
+                team={t}
+                profileTo={withSeason(`/constructors/${t.constructorId}`)}
+                driversTo={withSeason("/drivers", { team: t.constructorId })}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+}
+
+export default Constructors;
