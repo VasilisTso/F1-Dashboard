@@ -1,0 +1,514 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T15:06:51+00:00",
+  "title": "Design System: F1 Dashboard",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Race Control Red",
+        "usage": "Fills only (active nav, selection). White on it 4.97:1. Same value in both themes.",
+        "tonalRamp": [
+          "#330c0a",
+          "#62100e",
+          "#9b110d",
+          "#e00b05",
+          "#f8302b",
+          "#f17774",
+          "#f2b2b0",
+          "#f9e7e6"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Signal Red Ink",
+        "light": "#c40500",
+        "usage": "Red as text or outline: wordmark, focus ring.",
+        "tonalRamp": [
+          "#330d0a",
+          "#62130e",
+          "#9b150d",
+          "#e01105",
+          "#f8362b",
+          "#f17b74",
+          "#f2b4b0",
+          "#f9e7e6"
+        ]
+      },
+      "on-accent": {
+        "role": "primary",
+        "displayName": "On Red"
+      },
+      "best": {
+        "role": "tertiary",
+        "displayName": "Sector Purple",
+        "light": "#7b2cbf",
+        "tonalRamp": [
+          "#1a0a33",
+          "#2f0e62",
+          "#450d9b",
+          "#5c05e0",
+          "#7c2bf8",
+          "#a674f1",
+          "#cab0f2",
+          "#eee6f9"
+        ]
+      },
+      "gain": {
+        "role": "tertiary",
+        "displayName": "Sector Green",
+        "light": "#0f7a41",
+        "tonalRamp": [
+          "#112d1d",
+          "#1b5535",
+          "#23864f",
+          "#27bf6b",
+          "#4ad98a",
+          "#87deae",
+          "#bae8cf",
+          "#e9f6ef"
+        ]
+      },
+      "caution": {
+        "role": "tertiary",
+        "displayName": "Sector Amber",
+        "light": "#8f5a00",
+        "tonalRamp": [
+          "#33280a",
+          "#624c0e",
+          "#9b750d",
+          "#e0a605",
+          "#f8c12b",
+          "#f1d074",
+          "#f2e0b0",
+          "#f9f4e6"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Fault Red",
+        "light": "#c40500",
+        "tonalRamp": [
+          "#330d0a",
+          "#62130e",
+          "#9b150d",
+          "#e01105",
+          "#f8362b",
+          "#f17b74",
+          "#f2b4b0",
+          "#f9e7e6"
+        ]
+      },
+      "surface-0": {
+        "role": "neutral",
+        "displayName": "Carbon Page",
+        "light": "#f3f4f6",
+        "tonalRamp": [
+          "#1c1e22",
+          "#32363f",
+          "#49515f",
+          "#626f84",
+          "#828da1",
+          "#a9b0bc",
+          "#ccd0d6",
+          "#eeeff1"
+        ]
+      },
+      "surface-1": {
+        "role": "neutral",
+        "displayName": "Carbon Pit Wall",
+        "light": "#e7e9ed",
+        "tonalRamp": [
+          "#1c1e22",
+          "#32363f",
+          "#49515f",
+          "#626f84",
+          "#828da1",
+          "#a9b0bc",
+          "#ccd0d6",
+          "#eeeff1"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Carbon Panel",
+        "light": "#ffffff",
+        "tonalRamp": [
+          "#1c1e22",
+          "#32363f",
+          "#49515f",
+          "#626f84",
+          "#828da1",
+          "#a9b0bc",
+          "#ccd0d6",
+          "#eeeff1"
+        ]
+      },
+      "surface-3": {
+        "role": "neutral",
+        "displayName": "Carbon Inset",
+        "light": "#eef0f3",
+        "tonalRamp": [
+          "#1c1e22",
+          "#32363f",
+          "#49515f",
+          "#626f84",
+          "#828da1",
+          "#a9b0bc",
+          "#ccd0d6",
+          "#eeeff1"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "light": "#dadde3",
+        "tonalRamp": [
+          "#1c1e22",
+          "#32363f",
+          "#49515f",
+          "#626f84",
+          "#828da1",
+          "#a9b0bc",
+          "#ccd0d6",
+          "#eeeff1"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Hairline Strong",
+        "light": "#c3c8d0",
+        "tonalRamp": [
+          "#1c1e22",
+          "#32363f",
+          "#49515f",
+          "#626f84",
+          "#828da1",
+          "#a9b0bc",
+          "#ccd0d6",
+          "#eeeff1"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "light": "#0e1013",
+        "tonalRamp": [
+          "#1c1e21",
+          "#33373d",
+          "#4c525c",
+          "#667080",
+          "#858f9d",
+          "#abb1ba",
+          "#cdd0d5",
+          "#efeff1"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "light": "#4a515c",
+        "tonalRamp": [
+          "#1c1e21",
+          "#33373d",
+          "#4c525c",
+          "#667080",
+          "#858f9d",
+          "#abb1ba",
+          "#cdd0d5",
+          "#efeff1"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink Tertiary",
+        "light": "#5f6672",
+        "tonalRamp": [
+          "#1c1e21",
+          "#33373d",
+          "#4c525c",
+          "#667080",
+          "#858f9d",
+          "#abb1ba",
+          "#cdd0d5",
+          "#efeff1"
+        ]
+      },
+      "team-fallback": {
+        "role": "neutral",
+        "displayName": "Unknown Team Grey",
+        "usage": "Team stripe when constructorId has no color."
+      },
+      "accent-ink-light": {
+        "role": "primary",
+        "displayName": "Signal Red Ink (light theme)"
+      },
+      "best-light": {
+        "role": "tertiary",
+        "displayName": "Sector Purple (light theme)"
+      },
+      "gain-light": {
+        "role": "tertiary",
+        "displayName": "Sector Green (light theme)"
+      },
+      "caution-light": {
+        "role": "tertiary",
+        "displayName": "Sector Amber (light theme)"
+      },
+      "danger-light": {
+        "role": "tertiary",
+        "displayName": "Fault Red (light theme)"
+      },
+      "surface-0-light": {
+        "role": "neutral",
+        "displayName": "Carbon Page (light theme)"
+      },
+      "surface-1-light": {
+        "role": "neutral",
+        "displayName": "Carbon Pit Wall (light theme)"
+      },
+      "surface-2-light": {
+        "role": "neutral",
+        "displayName": "Carbon Panel (light theme)"
+      },
+      "surface-3-light": {
+        "role": "neutral",
+        "displayName": "Carbon Inset (light theme)"
+      },
+      "line-light": {
+        "role": "neutral",
+        "displayName": "Hairline (light theme)"
+      },
+      "line-strong-light": {
+        "role": "neutral",
+        "displayName": "Hairline Strong (light theme)"
+      },
+      "ink-light": {
+        "role": "neutral",
+        "displayName": "Ink (light theme)"
+      },
+      "ink-2-light": {
+        "role": "neutral",
+        "displayName": "Ink Secondary (light theme)"
+      },
+      "ink-3-light": {
+        "role": "neutral",
+        "displayName": "Ink Tertiary (light theme)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page title; 2.25rem base, 3rem from sm; uppercase."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Stat figures (2.25rem) and countdown digits (1.875rem)."
+      },
+      "position": {
+        "displayName": "Position",
+        "purpose": "Standings position numeral, right-aligned."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headings, uppercase."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Row names (600) and prose."
+      },
+      "body-sm": {
+        "displayName": "Body Small",
+        "purpose": "Nav, controls, page meta, gap values."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Row sub-lines, units, hints, footer."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Column heads, stat names, units, control labels. Uppercase, ink-3. Never an eyebrow."
+      }
+    },
+    "shadows": [
+      {
+        "name": "raised",
+        "value": "0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5)",
+        "light": "0 1px 2px rgb(14 16 19 / 0.06), 0 8px 24px -10px rgb(14 16 19 / 0.18)",
+        "purpose": "Card panels only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Stat count-up and entrance easing."
+      },
+      {
+        "name": "duration-state",
+        "value": "150ms",
+        "purpose": "Color/background transitions on nav, rows, buttons."
+      },
+      {
+        "name": "duration-countup",
+        "value": "900ms",
+        "purpose": "Stat tile count-up; skipped under prefers-reduced-motion."
+      },
+      {
+        "name": "skeleton-pulse",
+        "value": "Tailwind animate-pulse, motion-safe only",
+        "purpose": "Loading placeholders."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px",
+        "purpose": "Left rail replaces mobile drawer."
+      }
+    ],
+    "textures": [
+      {
+        "name": "bg-grid",
+        "value": "radial-gradient(var(--grid-dot) 1px, transparent 1px) / 16px 16px",
+        "purpose": "Faint dot grid behind main content. --grid-dot: rgb(255 255 255 / 0.035) dark, rgb(14 16 19 / 0.05) light."
+      }
+    ],
+    "teamColors": {
+      "source": "src/lib/teams.js",
+      "keyedBy": "Jolpica constructorId",
+      "fallback": "#6b7280",
+      "usage": "Team stripe only; always paired with team name."
+    }
+  },
+  "components": [
+    {
+      "name": "Rail Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Left rail nav; active item is a solid red block.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg>Overview</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/></svg>Drivers</a></nav>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-nav{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:4px;width:192px;padding:16px;background:var(--surface-1);} .ds-nav-item{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:6px;font-size:0.875rem;font-weight:500;color:var(--ink-2);text-decoration:none;transition:background-color 150ms,color 150ms;} .ds-nav-item:hover{background:var(--surface-3);color:var(--ink);} .ds-nav-item.is-active{background:var(--accent);color:var(--on-accent);} .ds-nav-item:focus-visible{outline:2px solid var(--accent-ink,#ff4136);outline-offset:2px;}"
+    },
+    {
+      "name": "Timing-Tower Row",
+      "kind": "custom",
+      "refersTo": "standings-row",
+      "description": "Signature standings row: position, team stripe, name, points, gap; P1 shows LEADER in sector purple.",
+      "html": "<ol class=\"ds-tower\"><li><a class=\"ds-row\" href=\"#\"><span class=\"ds-pos\">1</span><span class=\"ds-stripe\" style=\"background:#FF8000\"></span><span class=\"ds-name\"><b>McLaren</b><small>Norris · Piastri</small></span><span class=\"ds-pts\"><b>756</b><small>pts</small></span><span class=\"ds-gap ds-leader\">Leader</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></a></li><li><a class=\"ds-row\" href=\"#\"><span class=\"ds-pos\">2</span><span class=\"ds-stripe\" style=\"background:#00A19B\"></span><span class=\"ds-name\"><b>Mercedes</b><small>Russell · Antonelli</small></span><span class=\"ds-pts\"><b>398</b><small>pts</small></span><span class=\"ds-gap\">−358</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></a></li></ol>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-tower{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;list-style:none;margin:0;padding:0;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;} .ds-tower li+li{border-top:1px solid var(--line);} .ds-row{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px;color:var(--ink);text-decoration:none;transition:background-color 150ms;} .ds-row:hover{background:var(--surface-3);} .ds-row:focus-visible{outline:2px solid var(--accent-ink,#ff4136);outline-offset:2px;} .ds-pos{font-stretch:68%;font-weight:700;letter-spacing:-0.01em;line-height:1;width:32px;text-align:right;font-size:1.5rem;} .ds-stripe{width:4px;height:32px;border-radius:9999px;box-shadow:inset 0 0 0 1px var(--line);} .ds-name{flex:1;min-width:0;} .ds-name b{display:block;font-weight:600;} .ds-name small,.ds-pts small{display:block;font-size:0.75rem;color:var(--ink-2);} .ds-pts small{color:var(--ink-3);} .ds-pts{width:64px;text-align:right;} .ds-pts b{font-weight:600;} .ds-gap{width:64px;text-align:right;font-size:0.875rem;color:var(--ink-2);} .ds-leader{font-weight:600;text-transform:uppercase;color:var(--best);} .ds-row svg{color:var(--ink-3);flex-shrink:0;}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Raised panel with optional condensed uppercase title row.",
+      "html": "<section class=\"ds-card\"><header class=\"ds-card-head\"><h2>Next race</h2></header><div class=\"ds-card-body\">Panel content.</div></section>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-card{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);color:var(--ink-2);} .ds-card-head{padding:12px 20px;border-bottom:1px solid var(--line);} .ds-card-head h2{font-stretch:68%;font-weight:700;letter-spacing:-0.01em;line-height:1;margin:0;font-size:1.125rem;text-transform:uppercase;color:var(--ink);} .ds-card-body{padding:20px;font-size:0.875rem;}"
+    },
+    {
+      "name": "Stat Tile",
+      "kind": "card",
+      "refersTo": "stat-tile",
+      "description": "Key figure with uppercase label; numeral counts up on load.",
+      "html": "<dl class=\"ds-stats\"><div class=\"ds-stat\"><dt>Seasons</dt><dd class=\"ds-stat-v\">77</dd><dd class=\"ds-stat-h\">1950–2026</dd></div><div class=\"ds-stat\"><dt>Wins</dt><dd class=\"ds-stat-v ds-best\">251</dd></div></dl>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-stats{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:12px;margin:0;} .ds-stat{display:flex;flex-direction:column;gap:8px;padding:16px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);} .ds-stat dt{font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3,#8a919c);} .ds-stat dd{margin:0;} .ds-stat-v{font-stretch:68%;font-weight:700;letter-spacing:-0.01em;line-height:1;font-size:2.25rem;color:var(--ink);} .ds-best{color:var(--best);} .ds-stat-h{font-size:0.75rem;color:var(--ink-2);}"
+    },
+    {
+      "name": "Countdown",
+      "kind": "custom",
+      "refersTo": "countdown-cell",
+      "description": "Live countdown in inset cells with condensed digits.",
+      "html": "<div class=\"ds-cd\"><div><b>03</b><span>days</span></div><div><b>01</b><span>hrs</span></div><div><b>23</b><span>min</span></div><div><b>16</b><span>sec</span></div></div>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-cd{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;display:flex;gap:8px;} .ds-cd div{min-width:56px;padding:8px;border-radius:6px;background:var(--surface-3);text-align:center;} .ds-cd b{font-stretch:68%;font-weight:700;letter-spacing:-0.01em;line-height:1;display:block;font-size:1.875rem;color:var(--ink);} .ds-cd span{font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3,#8a919c);display:block;margin-top:4px;}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action (retry) on a hairline outline.",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/></svg>Try again</button>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-btn-outline{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid var(--line-strong);border-radius:6px;background:transparent;color:var(--ink);font-size:0.875rem;font-weight:500;cursor:pointer;transition:background-color 150ms;} .ds-btn-outline:hover{background:var(--surface-3);} .ds-btn-outline:focus-visible{outline:2px solid var(--accent-ink,#ff4136);outline-offset:2px;}"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "40px square ghost button for menu, close and theme toggle.",
+      "html": "<button class=\"ds-icon-btn\" type=\"button\" aria-label=\"Open navigation\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><line x1=\"4\" x2=\"20\" y1=\"12\" y2=\"12\"/><line x1=\"4\" x2=\"20\" y1=\"6\" y2=\"6\"/><line x1=\"4\" x2=\"20\" y1=\"18\" y2=\"18\"/></svg></button>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-icon-btn{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:6px;background:transparent;color:var(--ink-2);cursor:pointer;transition:background-color 150ms,color 150ms;} .ds-icon-btn:hover{background:var(--surface-3);color:var(--ink);} .ds-icon-btn:focus-visible{outline:2px solid var(--accent-ink,#ff4136);outline-offset:2px;}"
+    },
+    {
+      "name": "Season Select",
+      "kind": "input",
+      "refersTo": "select",
+      "description": "Native select with inline uppercase label.",
+      "html": "<label class=\"ds-field\"><span>Season</span><select class=\"ds-select\"><option>Current (2026)</option><option>2025</option></select></label>",
+      "css": ":host{--surface-0:#0e1013;--surface-1:#08090b;--surface-2:#16191e;--surface-3:#1f232a;--line:#262a31;--line-strong:#353a43;--ink:#f2f4f7;--ink-2:#a9b0bb;--ink-3:#8a919c;--accent:#e10600;--accent-ink:#ff4136;--on-accent:#fff;--best:#b98bff;--gain:#3ddc84;--caution:#ffc21a;--danger:#ff4136;--shadow:0 1px 2px rgb(0 0 0 / 0.4),0 8px 24px -8px rgb(0 0 0 / 0.5);} .ds-field{font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:8px;} .ds-field span{font-size:0.6875rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3,#8a919c);} .ds-select{font:inherit;height:40px;padding:0 32px 0 12px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface-2);color:var(--ink);font-size:0.875rem;font-weight:500;cursor:pointer;} .ds-select:hover{border-color:var(--ink-3);} .ds-select:focus-visible{outline:2px solid var(--accent-ink,#ff4136);outline-offset:2px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Timing Tower",
+    "overview": "The dashboard reads like a broadcast timing tower. Positions, points and gaps are the loudest marks on screen, set in condensed bold numerals with tabular figures so columns never jitter. Team color is identity and lives only in a narrow vertical stripe beside the team name; the chrome around it stays neutral carbon (dark) or cool paper-grey (light).\n\nDensity is moderate and list-led: content is a stack of hairline-bordered panels on a faint dot grid, and the primary data shape is a row (position, stripe, name, points, gap), not a card per item. F1 red is spent sparingly on the active nav block, focus, selection and the wordmark. Timing-sector semantics carry state: purple for best/leader, green for gain, amber for caution.\n\nThe system rejects the generic dark SaaS dashboard of same-size glowing cards and the neon-on-black \"racing\" costume. Dark is the default experience; light is a full peer theme, not an inversion afterthought.",
+    "keyCharacteristics": [
+      "Condensed (wdth 68) bold Archivo for numerals and headings; normal-width Archivo for UI.",
+      "Tabular figures on everything (set on `body`).",
+      "Two-layer neutrals: rail and top bar sit a step darker than the content area in both themes.",
+      "Hairline borders, one 6px radius, one soft raised shadow.",
+      "Team color appears only as a 4px stripe, always paired with the team name."
+    ],
+    "rules": [
+      {
+        "name": "The Neutral Chrome Rule",
+        "body": "The UI shell never takes a team color or a decorative hue. Red marks the active place and focus; everything else is ink on carbon.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Fill, Red Ink Rule",
+        "body": "`accent` is a fill; `accent-ink` is the text/line red. Do not swap them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sector Semantics Rule",
+        "body": "Purple, green and amber mean best, gain and caution, as on a timing screen. Never use them decoratively.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Everything Rule",
+        "body": "Tabular figures are on globally; every numeric column right-aligns so digits stack.",
+        "section": "typography"
+      },
+      {
+        "name": "The Label Is Not A Kicker Rule",
+        "body": "Uppercase labels name a column, a stat or a control. They never sit above a heading as an eyebrow.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Chrome Rule",
+        "body": "Rail, top bar and controls carry no shadow; separation comes from surface tone and a hairline.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do set positions, points, stats and headings in condensed bold Archivo (font-stretch 68%, weight 700) and keep tabular figures on.",
+      "Do show team identity with the 4px team stripe next to the team name, never by color alone.",
+      "Do use `accent` (#E10600) only as a fill with white text, and `accent-ink` whenever red is text or an outline.",
+      "Do use `best` purple for leader/fastest, `gain` green for improvement and `caution` amber for warnings.",
+      "Do build lists as timing-tower rows with hairline dividers, right-aligned numeric columns and a label-caps column head.",
+      "Do keep targets at 40px, give every view loading, empty and error states, and gate motion behind reduced-motion checks.",
+      "Do define every new color in both `[data-theme=\"dark\"]` and `[data-theme=\"light\"]` and map it through `@theme inline`."
+    ],
+    "donts": [
+      "Don't put team colors on chrome, card fills, headings or large areas; they belong to the stripe.",
+      "Don't set text in `accent` (#E10600) on dark surfaces; it fails 4.5:1.",
+      "Don't use purple, green or amber decoratively.",
+      "Don't place an uppercase label above a heading as an eyebrow.",
+      "Don't add glow, neon, gradients or hard offset shadows; the only shadow is Raised, on panels.",
+      "Don't introduce a second radius or a second typeface."
+    ]
+  }
+}
