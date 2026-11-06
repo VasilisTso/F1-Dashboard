@@ -1,21 +1,53 @@
-/* NOT WORKING MAYBE COME BACK LATER */
-import React, { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 
-// Create the context
-const SeasonContext = createContext();
+export const CURRENT_SEASON = "current";
 
-// Provider component to wrap your whole app
+const SeasonContext = createContext(null);
+
+// Season lives in the URL (`?season=2021`) so it survives reloads, can be shared,
+// and every query key can include it.
 export function SeasonProvider({ children }) {
-  const [season, setSeason] = useState("current"); // default = current season
+  const [searchParams, setSearchParams] = useSearchParams();
+  const raw = searchParams.get("season");
+  // This year's number is the running season: treat it as "current" so live views and caching apply.
+  const season =
+    raw && /^\d{4}$/.test(raw) && Number(raw) !== new Date().getFullYear() ? raw : CURRENT_SEASON;
 
-  return (
-    <SeasonContext.Provider value={{ season, setSeason }}>
-      {children}
-    </SeasonContext.Provider>
+  const setSeason = useCallback(
+    (next) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (!next || next === CURRENT_SEASON) params.delete("season");
+        else params.set("season", next);
+        return params;
+      });
+    },
+    [setSearchParams]
   );
-};
 
-// Custom hook for easy use
+  // Build an in-app link that keeps the selected season (and any extra params).
+  const withSeason = useCallback(
+    (path, extra = {}) => {
+      const params = new URLSearchParams(extra);
+      if (season !== CURRENT_SEASON) params.set("season", season);
+      const qs = params.toString();
+      return qs ? `${path}?${qs}` : path;
+    },
+    [season]
+  );
+
+  const value = useMemo(
+    () => ({ season, setSeason, withSeason, isCurrent: season === CURRENT_SEASON }),
+    [season, setSeason, withSeason]
+  );
+
+  return <SeasonContext.Provider value={value}>{children}</SeasonContext.Provider>;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSeason() {
-  return useContext(SeasonContext);
+  const ctx = useContext(SeasonContext);
+  if (!ctx) throw new Error("useSeason must be used inside <SeasonProvider>");
+  return ctx;
 }

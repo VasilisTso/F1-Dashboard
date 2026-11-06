@@ -1,0 +1,71 @@
+// Constructors list + team profile + season points chart. Shared words live in common.
+export default {
+  meta: {
+    loading: "Φόρτωση βαθμολογίας…",
+    afterRound: "μετά τον γύρο {round}",
+    none: "Δεν υπάρχει ακόμη βαθμολογία για αυτή τη σεζόν",
+  },
+  standings: {
+    title: "Βαθμολογία πρωταθλήματος",
+    loading: "Φόρτωση βαθμολογίας κατασκευαστών",
+    empty: "Δεν έχουν δοθεί ακόμη βαθμοί.",
+    team: "Ομάδα",
+  },
+  teams: {
+    title: "Ομάδες",
+    search: "Αναζήτηση ομάδων",
+    // Nationalities show as country names in Greek (see i18n/data.js).
+    placeholder: "Αναζήτηση ομάδας ή χώρας",
+    noMatch: "Δεν βρέθηκαν ομάδες",
+    nothingMatches: "Κανένα αποτέλεσμα για «{query}».",
+    seeMore: "Περισσότερα",
+  },
+  hero: {
+    inF1: "στη Formula 1 {span}",
+    logo: "Λογότυπο {name}",
+  },
+  stats: {
+    label: "Στατιστικά ιστορίας",
+    seasons: "Σεζόν",
+    races: "Αγώνες",
+    poles: "Pole",
+    drivers: "Οδηγοί",
+    allTime: "Συνολικά",
+    titles: "Τίτλοι",
+    titlesHint: "Πρωταθλήματα κατασκευαστών",
+    titlesPartial: "Φόρτωσε όλο το ιστορικό για πλήρη μέτρηση",
+  },
+  season: {
+    loading: "Φόρτωση σεζόν",
+    notClassified: "Δεν κατατάσσεται στο πρωτάθλημα κατασκευαστών του {season}.",
+    notClassifiedSelected: "Δεν κατατάσσεται στο πρωτάθλημα κατασκευαστών της επιλεγμένης σεζόν.",
+    loadingDrivers: "Φόρτωση οδηγών",
+  },
+  history: {
+    title: "Βαθμοί ανά σεζόν",
+    loadFull: "Όλο το ιστορικό",
+    more: { one: "+{n} σεζόν", other: "+{n} σεζόν" },
+    loadingSeasons: "Φόρτωση σεζόν…",
+    loadingStandings: "Φόρτωση βαθμολογιών… {n} έτοιμες",
+    showingAll: { one: "Εμφανίζεται {n} σεζόν", other: "Εμφανίζονται και οι {n} σεζόν" },
+    showingLast: { one: "Εμφανίζεται η τελευταία σεζόν", other: "Εμφανίζονται οι τελευταίες {n} σεζόν" },
+    empty: "Δεν έχουν καταγραφεί ακόμη βαθμολογίες πρωταθλήματος.",
+    partialTitle: "Κάποιες σεζόν δεν φορτώθηκαν",
+    partialMessage: "Η υπηρεσία δεδομένων F1 περιορίζει τα αιτήματα. Περίμενε λίγο και συνέχισε.",
+  },
+  chart: {
+    summary: "{team}: βαθμοί ανά σεζόν, {from} έως {to}.",
+    best: "Καλύτερη: {points} βαθμοί το {season}.",
+    championships: "Πρωταθλήματα: {list}.",
+    noChampionships: "Κανένα πρωτάθλημα σε αυτό το διάστημα.",
+    champions: "Πρωταθλήτρια",
+    inProgress: "Σεζόν σε εξέλιξη",
+    titleSeason: "Σεζόν τίτλου",
+    otherSeasons: "Άλλες σεζόν",
+    showTable: "Προβολή ως πίνακας",
+  },
+  notFound: {
+    title: "Η ομάδα δεν βρέθηκε",
+    message: "Δεν υπάρχει κατασκευαστής με id «{id}». Διάλεξε ομάδα από τη λίστα κατασκευαστών.",
+  },
+};

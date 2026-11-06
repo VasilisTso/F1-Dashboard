@@ -1,10 +1,27 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/formula-1-favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
     <title>F1 Dashboard</title>
+    <script>
+      // Apply saved theme and language before first paint (dark / English are the defaults).
+      // `lang` matters for paint too: Greek uppercase headings drop their accents only under lang="el".
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+        var l = localStorage.getItem("lang");
+        if (l === "el" || l === "en") document.documentElement.lang = l;
+      } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Noto+Sans:wdth,wght@62.5..100,100..900&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>

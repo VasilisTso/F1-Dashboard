@@ -1,225 +1,319 @@
-import React, { useEffect, useState } from "react";
-import { getDrivers, getDriverStandings } from "../api/jolpica";
-import { GiFullMotorcycleHelmet, GiTrophyCup } from "react-icons/gi";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { LuSearch, LuArrowRight, LuX } from "react-icons/lu";
+import { AnimatePresence, motion } from "motion/react";
+import { useDrivers, useDriverStandings } from "../hooks/queries";
+import { useSeason } from "../context/SeasonContext";
+import {
+  Card,
+  PageHeader,
+  SkeletonRows,
+  Skeleton,
+  ErrorState,
+  StandingsList,
+  StandingsRow,
+  TeamStripe,
+} from "../components/ui";
+import { useI18n, useT } from "../i18n/LanguageContext";
+import { useDataLabels } from "../i18n/data";
 
-const DriverModal = ({ driver, onClose}) => {
-    if (!driver) return null;
+const NO_TEAM = "__none";
 
-    return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="bg-[#1a1a1a] text-white p-6 rounded-2xl w-11/12 md:w-1/2 relative">
-                <button onClick={onClose}
-                    className="absolute top-3 right-3 text-red-600 hover:text-white text-2xl cursor-pointer"
-                >
-                    ✕
-                </button>
-
-                <h2 className="text-3xl font-bold mb-2">
-                    {driver.givenName} {driver.familyName}
-                </h2>
-                <p className="text-gray-400 mb-4">Driver ID: {driver.driverId}</p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <p><span className="font-semibold">Nationality:</span> {driver.nationality}</p>
-                    <p><span className="font-semibold">Date of Birth:</span> {driver.dateOfBirth}</p>
-                    <p><span className="font-semibold">Permanent Number:</span> {driver.permanentNumber || "—"}</p>
-                    <p><span className="font-semibold">Code:</span> {driver.code || "—"}</p>
-                </div>
-
-                <div className="mt-10">
-                    <a href={driver.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#E10600] hover:underline"
-                    >
-                        View Biography →
-                    </a>
-                </div>
-            </div>
-        </div>
-    );
+// Filtering: cards that stay glide to their new slot, cards that leave fade out of the way.
+const EASE = [0.16, 1, 0.3, 1];
+const cardMotion = {
+  layout: true,
+  initial: { opacity: 0, scale: 0.96 },
+  animate: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 0.96, transition: { duration: 0.15 } },
+  transition: { duration: 0.3, ease: EASE },
 };
 
-const teamColors = {
-  "Red Bull": "#264287",
-  "Ferrari": "#EF1A2D",
-  "McLaren": "#FF8000",
-  "Mercedes": "#00A19B",
-  "Aston Martin": "#037A68",
-  "Williams": "#1868DB",
-  "RB F1 Team": "#FFFFFF",
-  "Haas F1 Team": "#9C9FA2",
-  "Alpine F1 Team": "#960963",
-  "Audi": "#F50537",
-  "Cadillac F1 Team": "#FFB81C"
-};
-
-function Drivers() {
-    const [drivers, setDrivers] = useState([]);
-    const [search, setSearch] = useState("");
-    const [selected, setSelected] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [driverStandings, setDriverStandings] = useState([]);
-
-    // detect ?team= param from URL Constructors page
-    const location = useLocation();
-    const navigate = useNavigate();
-    const queryParams = new URLSearchParams(location.search);
-    const teamFilter = queryParams.get("team") || "";
-
-    useEffect(() => {
-        Promise.all([
-            getDrivers(),
-            getDriverStandings()
-        ])
-            .then(([driversRes, standingsRes]) => {
-                const driversList = driversRes?.MRData?.DriverTable?.Drivers || [];
-                const standingsList =
-                    standingsRes?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings || [];
-
-                // Map driverId → constructor name
-                const constructorMap = {};
-                standingsList.forEach(s => {
-                    if (s.Driver?.driverId && s.Constructors?.[0]?.name) {
-                        constructorMap[s.Driver.driverId] = s.Constructors[0].name;
-                    }
-                });
-
-                // Merge constructor info into driver list
-                const merged = driversList.map(d => ({
-                    ...d,
-                    constructorName: constructorMap[d.driverId] || "—",
-                }));
-
-                // sort by team to render together
-                merged.sort((a, b) => {
-                    const teamA = a.constructorName || "";
-                    const teamB = b.constructorName || "";
-                    if (teamA < teamB) return -1;
-                    if (teamA > teamB) return 1;
-                    // If same team, sort by family name
-                    return a.familyName.localeCompare(b.familyName);
-                })
-
-                setDrivers(merged);
-
-                // store standings separately for leaderboard
-                setDriverStandings(standingsList);
-            })
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
-    }, [])
-
-    // Apply both search filter and team filter
-    const filtered = drivers.filter((d) => {
-        const matchesSearch = `${d.givenName} ${d.familyName}`
-            .toLowerCase()
-            .includes(search.toLowerCase());
-        const matchesTeam = teamFilter
-            ? d.constructorName?.toLowerCase() === teamFilter.toLowerCase()
-            : true;
-        return matchesSearch && matchesTeam;
-    });
-
-    if (loading) return <div className="p-8 text-gray-300">Loading drivers...</div>;
-
-    return (
-        <div className="p-6">
-            {/* DRIVER CHAMPIONSHIP LEADERBOARD */}
-            {driverStandings.length > 0 && (
-                <div className="bg-[#121212] rounded-2xl p-4 mb-6 border border-gray-700">
-                    <h2 className="text-xl font-semibold text-white mb-4">
-                        Drivers Championship 2025
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {driverStandings.map((driver, index) => {
-                            const d = driver.Driver;
-                            const teamName = driver.Constructors?.[0]?.name;
-                            const teamColor = teamColors[teamName] || "#1A1A1A";
-
-                            return (
-                                <div
-                                    key={d.driverId}
-                                    className="bg-[#1A1A1A] flex flex-wrap justify-between items-center border rounded-lg px-4 py-4"
-                                    style={{borderColor: teamColor }}
-                                >
-                                    <span className="text-2xl font-bold"  style={{color: teamColor}}>
-                                        {driver.position || index + 1}. {d.givenName} {d.familyName}
-                                    </span>
-                                    <span className="text-lg text-yellow-400 font-semibold flex items-center gap-2">
-                                        <GiTrophyCup /> {driver.points} pts
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+// `ref` is passed through so AnimatePresence (popLayout) can measure the card.
+function DriverCard({ driver, to, ref }) {
+  const { t, fmt } = useI18n();
+  const { nationality } = useDataLabels();
+  const s = driver.standing;
+  return (
+    <motion.li
+      ref={ref}
+      {...cardMotion}
+      className="relative flex flex-col rounded-panel border border-line bg-surface-2 shadow-raised transition-colors duration-150 hover:border-line-strong">
+      <div className="flex items-start gap-3 p-4">
+        <span className="font-display w-12 shrink-0 text-4xl text-ink-3" aria-hidden>
+          {driver.permanentNumber ?? "—"}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm text-ink-2">{driver.givenName}</p>
+          <h4 className="truncate font-display text-2xl uppercase text-ink">
+            {/* Stretched link: the whole card opens the profile. */}
+            <Link to={to} className="after:absolute after:inset-0 after:rounded-panel">
+              <span className="sr-only">{driver.givenName} </span>
+              {driver.familyName}
+            </Link>
+          </h4>
+          <p className="truncate text-xs text-ink-2">
+            {nationality(driver.nationality)}
+            {driver.permanentNumber && (
+              <span className="sr-only"> · {t("drivers.grid.carNumber", { n: driver.permanentNumber })}</span>
             )}
-
-
-            {/* Show banner if filtered by team */}
-            {teamFilter && (
-                <div className="mb-6 text-gray-300">
-                    Showing drivers for{" "}
-                    <span className="font-bold text-white">{teamFilter}</span>
-                    <button
-                        onClick={() => navigate("/drivers")}
-                        className="ml-3 text-[#E10600] underline text-sm hover:text-white cursor-pointer"
-                    >
-                        Clear filter
-                    </button>
-                </div>
-            )}
-            
-            <h1 className="flex items-center gap-2 text-white text-3xl font-bold mb-6">
-                <GiFullMotorcycleHelmet />Drivers
-            </h1>
-
-            <input type="text" 
-                placeholder="Search driver"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full md:w-1/2 p-2 rounded-lg [#121212] border border-gray-700 text-white mb-10 focus:outline-none focus:ring-1 focus:ring-[#E10600]"
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
-                {filtered.map(d => {
-                    // background based on team color
-                    const teamColor = teamColors[d.constructorName] || "#1A1A1A";
-
-                    return (
-                        <div key={d.driverId} onClick={() => setSelected(d)}
-                            // bg-[#1A1A1A]
-                            className="bg-[#1A1A1A] cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.02]"
-                            style={{color: teamColor, borderColor: teamColor, boxShadow: `0 0 10px 0 ${teamColor}40`, }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.boxShadow = `0 0 25px 4px ${teamColor}60`; // brighter on hover
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.boxShadow = `0 0 10px 0 ${teamColor}40`; // revert glow
-                            }}
-                        >
-                            <div className="flex flex-wrap items-center justify-between px-4 py-1">
-                                <div className="text-2xl font-bold mb-4 pr-2">
-                                    {d.givenName} {d.familyName}
-                                </div>
-                                <div className="">
-                                    <div className="text-xl font-semibold mt-2">{d.constructorName}</div>
-                                    <div className="text-xl font-semibold mt-2">{d.nationality}</div>
-                                    <div className="text-xl font-semibold mt-2">
-                                        Number: {d.permanentNumber || "—"}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {selected && <DriverModal driver={selected} onClose={() => setSelected(null)} />}
+          </p>
         </div>
-    );
+        {driver.code && (
+          <span className="rounded-panel border border-line-strong px-1.5 py-0.5 text-xs font-semibold tracking-wide text-ink-2">
+            {driver.code}
+          </span>
+        )}
+      </div>
+      <dl className="mt-auto grid grid-cols-3 border-t border-line">
+        {[
+          [t("common.pos"), s ? `P${s.position}` : "—"],
+          [t("common.points"), s ? fmt.points(s.points) : "—"],
+          [t("common.wins"), s?.wins ?? "—"],
+        ].map(([k, v], i) => (
+          <div key={k} className={`px-4 py-3 ${i > 0 ? "border-l border-line" : ""}`}>
+            <dt className="label-caps">{k}</dt>
+            <dd className="font-display mt-1 text-xl text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </motion.li>
+  );
 }
 
-export default Drivers
+function TeamGroup({ team, drivers, profileTo, driverTo, ref }) {
+  const t = useT();
+  const headingId = `team-${team.constructorId || NO_TEAM}`;
+  return (
+    <motion.section ref={ref} {...cardMotion} aria-labelledby={headingId}>
+      <div className="mb-3 flex items-center gap-3">
+        <TeamStripe constructorId={team.constructorId} className="h-6" />
+        <h3 id={headingId} className="min-w-0 flex-1 truncate font-display text-xl uppercase text-ink">
+          {team.name ?? t("drivers.grid.otherEntries")}
+        </h3>
+        {profileTo && (
+          <Link
+            to={profileTo}
+            className="inline-flex h-10 items-center gap-1 rounded-panel px-2 -mr-2 text-sm font-medium text-ink-2 hover:bg-surface-3 hover:text-ink transition-colors duration-150"
+          >
+            {t("drivers.grid.teamProfile")} <LuArrowRight className="size-4" aria-hidden />
+          </Link>
+        )}
+      </div>
+      <ul className="relative grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {drivers.map((d) => (
+            <DriverCard key={d.driverId} driver={d} to={driverTo(d.driverId)} />
+          ))}
+        </AnimatePresence>
+      </ul>
+    </motion.section>
+  );
+}
+
+function Drivers() {
+  const t = useT();
+  const { nationality } = useDataLabels();
+  const [search, setSearch] = useState("");
+  const { withSeason } = useSeason();
+  // ?team=<constructorId>, e.g. from the Constructors page.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const teamFilter = searchParams.get("team") || "";
+  const setTeamFilter = (team) =>
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (team) params.set("team", team);
+      else params.delete("team");
+      return params;
+    });
+
+  const driversQ = useDrivers();
+  const standingsQ = useDriverStandings();
+  const error = driversQ.error || standingsQ.error;
+
+  if (error) {
+    return (
+      <>
+        <PageHeader title={t("common.nav.drivers")} />
+        <ErrorState
+          onRetry={() => {
+            driversQ.refetch();
+            standingsQ.refetch();
+          }}
+        />
+      </>
+    );
+  }
+
+  const isPending = driversQ.isPending || standingsQ.isPending;
+  const standings = standingsQ.data?.standings ?? [];
+  const leaderPoints = Number(standings[0]?.points ?? 0);
+  const driverTo = (id) => withSeason(`/drivers/${id}`);
+
+  // Group the season's drivers by their latest team, teams in championship order
+  // (best-placed driver first); drivers without a classified result go last.
+  const standingById = Object.fromEntries(standings.map((s) => [s.Driver.driverId, s]));
+  const groups = new Map();
+  for (const s of standings) {
+    const c = s.Constructors?.at(-1);
+    if (c && !groups.has(c.constructorId)) groups.set(c.constructorId, { team: c, drivers: [] });
+  }
+  for (const d of driversQ.data ?? []) {
+    const standing = standingById[d.driverId];
+    const c = standing?.Constructors?.at(-1);
+    const key = c?.constructorId ?? NO_TEAM;
+    if (!groups.has(key)) groups.set(key, { team: { constructorId: "", name: null }, drivers: [] });
+    groups.get(key).drivers.push({ ...d, standing });
+  }
+  const allGroups = [...groups.values()].filter((g) => g.drivers.length > 0);
+  for (const g of allGroups) {
+    g.drivers.sort((a, b) => (Number(a.standing?.position) || 999) - (Number(b.standing?.position) || 999));
+  }
+
+  const query = search.trim().toLowerCase();
+  const visible = allGroups
+    .filter((g) => !teamFilter || g.team.constructorId === teamFilter)
+    .map((g) => ({
+      ...g,
+      // Matches the raw (English) nationality and the displayed one.
+      drivers: g.drivers.filter((d) =>
+        `${d.givenName} ${d.familyName} ${d.nationality} ${nationality(d.nationality)} ${d.code ?? ""}`
+          .toLowerCase()
+          .includes(query),
+      ),
+    }))
+    .filter((g) => g.drivers.length > 0);
+
+  const teamFilterName = allGroups.find((g) => g.team.constructorId === teamFilter)?.team.name ?? teamFilter;
+  const season = standingsQ.data?.season;
+  const meta = isPending
+    ? t("drivers.meta.loading")
+    : season
+      ? `${t("common.season.title", { season })} · ${t("drivers.meta.afterRound", { round: standingsQ.data.round })}`
+      : t("drivers.meta.none");
+
+  return (
+    <>
+      <PageHeader title={t("common.nav.drivers")} meta={meta} />
+
+      {/* Wide screens: standings and the cards sit side by side instead of stacking. */}
+      <div className="wide:grid wide:grid-cols-[minmax(0,38rem)_minmax(0,1fr)] wide:items-start wide:gap-6">
+        <Card title={t("drivers.standings.title")} bodyClassName="py-3" className="mb-8 wide:mb-0">
+          {isPending ? (
+            <SkeletonRows rows={10} label={t("drivers.standings.loading")} />
+          ) : standings.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-ink-2">{t("drivers.standings.empty")}</p>
+          ) : (
+            <StandingsList label={t("drivers.standings.driver")} showExtra={t("common.wins")} linked>
+              {standings.map((s) => {
+                const team = s.Constructors?.at(-1);
+                return (
+                  <StandingsRow
+                    key={s.Driver.driverId}
+                    position={s.position ?? s.positionText}
+                    constructorId={team?.constructorId}
+                    name={`${s.Driver.givenName} ${s.Driver.familyName}`}
+                    sub={team?.name}
+                    points={s.points}
+                    gap={leaderPoints - Number(s.points)}
+                    extra={s.wins}
+                    to={driverTo(s.Driver.driverId)}
+                  />
+                );
+              })}
+            </StandingsList>
+          )}
+        </Card>
+
+        <section aria-labelledby="grid-heading">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 id="grid-heading" className="font-display text-2xl uppercase text-ink">
+              {t("drivers.grid.title")}
+            </h2>
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <label className="w-full sm:w-52">
+                <span className="sr-only">{t("drivers.grid.filterTeam")}</span>
+                <select
+                  value={teamFilter}
+                  onChange={(e) => setTeamFilter(e.target.value)}
+                  disabled={isPending}
+                  className="h-10 w-full rounded-panel border border-line-strong bg-surface-2 px-3 text-sm text-ink hover:border-ink-3"
+                >
+                  <option value="">{t("drivers.grid.allTeams")}</option>
+                  {allGroups
+                    .filter((g) => g.team.constructorId)
+                    .map((g) => (
+                      <option key={g.team.constructorId} value={g.team.constructorId}>
+                        {g.team.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="relative w-full sm:w-64">
+                <span className="sr-only">{t("drivers.grid.search")}</span>
+                <LuSearch
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  placeholder={t("drivers.grid.placeholder")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-10 w-full rounded-panel border border-line-strong bg-surface-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-3 hover:border-ink-3"
+                />
+              </label>
+            </div>
+          </div>
+
+          {teamFilter && !isPending && (
+            <p className="mb-4 flex flex-wrap items-center gap-2 text-sm text-ink-2" role="status">
+              {t("drivers.grid.showingFor")} <span className="font-semibold text-ink">{teamFilterName}</span>
+              <button
+                type="button"
+                onClick={() => setTeamFilter("")}
+                className="inline-flex h-8 items-center gap-1 rounded-panel border border-line-strong px-2 font-medium text-ink hover:bg-surface-3 transition-colors duration-150"
+              >
+                <LuX className="size-3.5" aria-hidden /> {t("drivers.grid.clearFilter")}
+              </button>
+            </p>
+          )}
+
+          {isPending ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} className="h-40" />
+              ))}
+            </div>
+          ) : visible.length === 0 ? (
+            <ErrorState
+              tone="empty"
+              title={t("drivers.grid.noMatch")}
+              message={
+                query
+                  ? t("drivers.grid.nothingMatches", { query: search })
+                  : t("drivers.grid.noneForTeam", { team: teamFilterName })
+              }
+            />
+          ) : (
+            <div className="relative flex flex-col gap-8">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {visible.map((g) => (
+                  <TeamGroup
+                    key={g.team.constructorId || NO_TEAM}
+                    team={g.team}
+                    drivers={g.drivers}
+                    profileTo={g.team.constructorId ? withSeason(`/constructors/${g.team.constructorId}`) : null}
+                    driverTo={driverTo}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
+export default Drivers;

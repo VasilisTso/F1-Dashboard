@@ -1,0 +1,77 @@
+// Drivers list + driver profile. Shared words (Points, Wins, Pos, pts…) live in common.
+export default {
+  meta: {
+    loading: "Φόρτωση οδηγών…",
+    afterRound: "μετά τον γύρο {round}",
+    none: "Δεν υπάρχει ακόμη βαθμολογία για αυτή τη σεζόν",
+  },
+  standings: {
+    title: "Βαθμολογία πρωταθλήματος",
+    loading: "Φόρτωση βαθμολογίας οδηγών",
+    empty: "Δεν έχουν δοθεί ακόμη βαθμοί.",
+    driver: "Οδηγός",
+  },
+  grid: {
+    title: "Grid",
+    filterTeam: "Φίλτρο ομάδας",
+    allTeams: "Όλες οι ομάδες",
+    search: "Αναζήτηση οδηγών",
+    // Nationalities show as country names in Greek (see i18n/data.js).
+    placeholder: "Αναζήτηση οδηγού ή χώρας",
+    showingFor: "Εμφανίζονται οι οδηγοί της",
+    clearFilter: "Καθαρισμός φίλτρου",
+    noMatch: "Δεν βρέθηκαν οδηγοί",
+    nothingMatches: "Κανένα αποτέλεσμα για «{query}».",
+    noneForTeam: "Δεν βρέθηκαν οδηγοί για την {team}.",
+    otherEntries: "Λοιπές συμμετοχές",
+    teamProfile: "Προφίλ ομάδας",
+    carNumber: "αριθμός {n}",
+  },
+  hero: {
+    born: "Γεννήθηκε στις {date}",
+    bornAge: "Γεννήθηκε στις {date} ({age})",
+    car: "Αριθμός {n}",
+  },
+  stats: {
+    label: "Στατιστικά καριέρας",
+    seasons: "Σεζόν",
+    starts: "Εκκινήσεις",
+    podiums: "Βάθρα",
+    poles: "Pole",
+    teams: "Ομάδες",
+    allTime: "Συνολικά",
+  },
+  season: {
+    loading: "Φόρτωση σεζόν",
+    notClassified: "Δεν κατατάσσεται στο πρωτάθλημα οδηγών του {season}.",
+    notClassifiedSelected: "Δεν κατατάσσεται στο πρωτάθλημα οδηγών της επιλεγμένης σεζόν.",
+  },
+  teams: {
+    title: "Ομάδες",
+    loading: "Φόρτωση ομάδων",
+  },
+  results: {
+    title: "Αποτελέσματα αγώνων {season}",
+    titleNoSeason: "Αποτελέσματα αγώνων",
+    loading: "Φόρτωση αποτελεσμάτων",
+    empty: "Δεν υπάρχουν αποτελέσματα αγώνων για αυτόν τον οδηγό στην επιλεγμένη σεζόν.",
+    round: "Γύρ.",
+    roundShort: "Γ{round}",
+    grandPrix: "Γκραν Πρι",
+    grid: "Εκκ.",
+    // Started from the pit lane (grid 0); the code stays as broadcasts show it.
+    pitLane: "PL",
+    finish: "Τερμ.",
+    places: "Θέσεις",
+    pts: "Βαθ.",
+    ptsHint: "Βαθμοί του Σαββατοκύριακου (αγώνας + sprint)",
+    total: "Σύν.",
+    totalHint: "Βαθμοί πρωταθλήματος μετά από αυτόν τον γύρο",
+    status: "Κατάσταση",
+    sprint: { one: "{n} sprint", other: "{n} sprint" },
+  },
+  notFound: {
+    title: "Ο οδηγός δεν βρέθηκε",
+    message: "Δεν υπάρχει οδηγός με id «{id}». Διάλεξε οδηγό από τη λίστα οδηγών.",
+  },
+};
