@@ -17,6 +17,7 @@ import {
 } from "../components/ui";
 import { useI18n, useT } from "../i18n/LanguageContext";
 import { useDataLabels } from "../i18n/data";
+import { ProgressionChart } from "../components/ProgressionChart";
 
 const NO_TEAM = "__none";
 
@@ -200,32 +201,36 @@ function Drivers() {
 
       {/* Wide screens: standings and the cards sit side by side instead of stacking. */}
       <div className="wide:grid wide:grid-cols-[minmax(0,38rem)_minmax(0,1fr)] wide:items-start wide:gap-6">
-        <Card title={t("drivers.standings.title")} bodyClassName="py-3" className="mb-8 wide:mb-0">
-          {isPending ? (
-            <SkeletonRows rows={10} label={t("drivers.standings.loading")} />
-          ) : standings.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-2">{t("drivers.standings.empty")}</p>
-          ) : (
-            <StandingsList label={t("drivers.standings.driver")} showExtra={t("common.wins")} linked>
-              {standings.map((s) => {
-                const team = s.Constructors?.at(-1);
-                return (
-                  <StandingsRow
-                    key={s.Driver.driverId}
-                    position={s.position ?? s.positionText}
-                    constructorId={team?.constructorId}
-                    name={`${s.Driver.givenName} ${s.Driver.familyName}`}
-                    sub={team?.name}
-                    points={s.points}
-                    gap={leaderPoints - Number(s.points)}
-                    extra={s.wins}
-                    to={driverTo(s.Driver.driverId)}
-                  />
-                );
-              })}
-            </StandingsList>
-          )}
-        </Card>
+        {/* Standings, then how they came about. */}
+        <div className="mb-8 flex min-w-0 flex-col gap-8 wide:mb-0">
+          <Card title={t("drivers.standings.title")} bodyClassName="py-3">
+            {isPending ? (
+              <SkeletonRows rows={10} label={t("drivers.standings.loading")} />
+            ) : standings.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-ink-2">{t("drivers.standings.empty")}</p>
+            ) : (
+              <StandingsList label={t("drivers.standings.driver")} showExtra={t("common.wins")} linked>
+                {standings.map((s) => {
+                  const team = s.Constructors?.at(-1);
+                  return (
+                    <StandingsRow
+                      key={s.Driver.driverId}
+                      position={s.position ?? s.positionText}
+                      constructorId={team?.constructorId}
+                      name={`${s.Driver.givenName} ${s.Driver.familyName}`}
+                      sub={team?.name}
+                      points={s.points}
+                      gap={leaderPoints - Number(s.points)}
+                      extra={s.wins}
+                      to={driverTo(s.Driver.driverId)}
+                    />
+                  );
+                })}
+              </StandingsList>
+            )}
+          </Card>
+          {standings.length > 0 && <ProgressionChart kind="drivers" season={Number(season)} />}
+        </div>
 
         <section aria-labelledby="grid-heading">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

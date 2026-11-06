@@ -16,6 +16,7 @@ import {
 } from "../components/ui";
 import { useI18n, useT } from "../i18n/LanguageContext";
 import { useDataLabels } from "../i18n/data";
+import { ProgressionChart } from "../components/ProgressionChart";
 
 function TeamCard({ team, profileTo, driversTo }) {
   const { t, fmt } = useI18n();
@@ -102,29 +103,33 @@ function Constructors() {
 
       {/* Wide screens: standings and the cards sit side by side instead of stacking. */}
       <div className="wide:grid wide:grid-cols-[minmax(0,38rem)_minmax(0,1fr)] wide:items-start wide:gap-6">
-        <Card title={t("constructors.standings.title")} bodyClassName="py-3" className="mb-8 wide:mb-0">
-          {isPending ? (
-            <SkeletonRows rows={10} label={t("constructors.standings.loading")} />
-          ) : teams.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-2">{t("constructors.standings.empty")}</p>
-          ) : (
-            <StandingsList label={t("constructors.standings.team")} showExtra={t("common.wins")} linked>
-              {teams.map((team) => (
-                <StandingsRow
-                  key={team.constructorId}
-                  position={team.position}
-                  constructorId={team.constructorId}
-                  name={team.name}
-                  sub={nationality(team.nationality)}
-                  points={team.points}
-                  gap={leaderPoints - Number(team.points)}
-                  extra={team.wins}
-                  to={withSeason(`/constructors/${team.constructorId}`)}
-                />
-              ))}
-            </StandingsList>
-          )}
-        </Card>
+        {/* Standings, then how they came about. */}
+        <div className="mb-8 flex min-w-0 flex-col gap-8 wide:mb-0">
+          <Card title={t("constructors.standings.title")} bodyClassName="py-3">
+            {isPending ? (
+              <SkeletonRows rows={10} label={t("constructors.standings.loading")} />
+            ) : teams.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-ink-2">{t("constructors.standings.empty")}</p>
+            ) : (
+              <StandingsList label={t("constructors.standings.team")} showExtra={t("common.wins")} linked>
+                {teams.map((team) => (
+                  <StandingsRow
+                    key={team.constructorId}
+                    position={team.position}
+                    constructorId={team.constructorId}
+                    name={team.name}
+                    sub={nationality(team.nationality)}
+                    points={team.points}
+                    gap={leaderPoints - Number(team.points)}
+                    extra={team.wins}
+                    to={withSeason(`/constructors/${team.constructorId}`)}
+                  />
+                ))}
+              </StandingsList>
+            )}
+          </Card>
+          {teams.length > 0 && <ProgressionChart kind="constructors" season={Number(data.season)} />}
+        </div>
 
         <section aria-labelledby="teams-heading">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

@@ -1,12 +1,18 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { LuArrowRight } from "react-icons/lu";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSeason } from "../context/SeasonContext";
 import {
   useDriverStandings,
   useConstructorStandings,
   useNextRace,
   useLastRaceResults,
+  useSchedule,
 } from "../hooks/queries";
+import { toDate, weekendPhase, weekendSessions } from "../lib/weekend";
+import { titleMaths } from "../lib/championship";
+import { CalendarButton } from "../components/CalendarButton";
 import { useNow } from "../hooks/useNow";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { countryFlag } from "../lib/countries";
@@ -23,19 +29,6 @@ import {
   ZoneLabel,
   useZone,
 } from "../components/ui";
-
-// Jolpica session keys in weekend order; the race itself sits on the race object.
-// Names live in overview.sessions.<key>.
-const SESSIONS = ["FirstPractice", "SecondPractice", "ThirdPractice", "SprintQualifying", "SprintShootout", "Sprint", "Qualifying"];
-
-// "2026-11-08" + "17:00:00Z" -> Date. No time = end of the local day, as on the Races page,
-// so an untimed session never counts as started early.
-const toDate = ({ date, time }) => new Date(time ? `${date}T${time}` : `${date}T23:59:59`);
-
-const weekendSessions = (race) =>
-  [...SESSIONS.filter((key) => race[key]).map((key) => ({ key, start: toDate(race[key]), timed: !!race[key].time })),
-    { key: "Race", start: toDate(race), timed: !!race.time },
-  ].sort((a, b) => a.start - b.start);
 
 const sessionTimeOpts = (timed) => ({
   weekday: "short",
@@ -63,6 +56,7 @@ function NextRace({ race, withSeason }) {
   const now = useNow(30_000);
   const sessions = weekendSessions(race);
   const nextIdx = sessions.findIndex((s) => s.start.getTime() > now);
+  const { phase, session } = weekendPhase(sessions, now);
   const loc = race.Circuit.Location;
   const zone = useZone(toDate(race));
 
@@ -77,9 +71,41 @@ function NextRace({ race, withSeason }) {
         {t("overview.round", { round: race.round })} · {race.Circuit.circuitName} · {loc.locality}, {country(loc.country)}
       </p>
 
-      <div className="mt-5">
-        <p className="label-caps mb-2">{t("overview.lightsOut")}</p>
-        <Countdown target={toDate(race)} />
+      {/* The headline follows the weekend: countdown, the session on track, or waiting for results. */}
+      <div className="mt-5" role="status">
+        {phase === "awaiting" ? (
+          <>
+            <p className="font-display text-3xl uppercase text-ink">{t("overview.weekend.awaitingTitle")}</p>
+            <p className="mt-1 text-sm text-ink-2">{t("overview.weekend.awaiting")}</p>
+          </>
+        ) : phase === "live" && session.key === "Race" ? (
+          <>
+            <p className="font-display text-3xl uppercase text-accent-ink">
+              {t("overview.weekend.live", { session: t("overview.sessions.Race") })}
+            </p>
+            <p className="mt-1 text-sm text-ink-2">
+              {t("overview.weekend.endsAround", { time: fmt.date(session.end, { hour: "2-digit", minute: "2-digit" }) })}
+            </p>
+          </>
+        ) : (
+          <>
+            {phase === "live" && (
+              <p className="mb-4 text-sm">
+                <span className="font-semibold uppercase text-accent-ink">
+                  {t("overview.weekend.live", { session: t(`overview.sessions.${session.key}`) })}
+                </span>
+                <span className="text-ink-2">
+                  {" · "}
+                  {t("overview.weekend.endsAround", {
+                    time: fmt.date(session.end, { hour: "2-digit", minute: "2-digit" }),
+                  })}
+                </span>
+              </p>
+            )}
+            <p className="label-caps mb-2">{t("overview.lightsOut")}</p>
+            <Countdown target={toDate(race)} />
+          </>
+        )}
       </div>
 
       <div className="mt-6">
@@ -90,17 +116,18 @@ function NextRace({ race, withSeason }) {
         </div>
         <ol className="divide-y divide-line">
           {sessions.map((s, i) => {
-            const done = s.start.getTime() <= now && i !== sessions.length - 1;
-            const isNext = i === nextIdx;
+            const isLive = phase === "live" && s === session;
+            const done = s.end.getTime() <= now && !isLive;
+            const isNext = i === nextIdx && phase !== "live";
             return (
               <li key={s.key} className="flex min-h-10 items-center gap-3 py-1.5 text-sm">
                 <span className={`flex-1 font-medium ${done ? "text-ink-3" : "text-ink"}`}>
                   {t(`overview.sessions.${s.key}`)}
                   {done && <span className="sr-only"> ({t("overview.finished")})</span>}
                 </span>
-                {isNext && (
+                {(isNext || isLive) && (
                   <span className="rounded-panel bg-accent px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-on-accent">
-                    {t("overview.next")}
+                    {t(isLive ? "overview.weekend.liveBadge" : "overview.next")}
                   </span>
                 )}
                 <time
@@ -115,6 +142,10 @@ function NextRace({ race, withSeason }) {
           })}
         </ol>
       </div>
+
+      {phase !== "awaiting" && (
+        <CalendarButton races={[race]} filename={`f1-${race.season}-round-${race.round}.ics`} className="mt-4" />
+      )}
     </Card>
   );
 }
@@ -210,7 +241,8 @@ function LastRace({ query, isCurrent, withSeason }) {
 
 // Bar length = points as a share of the leader's; the gap figure carries the exact value.
 // Single series, so bars stay neutral; identity comes from the stripe + name.
-function GapRow({ position, constructorId, name, sub, points, leaderPoints, to }) {
+// `out`: can no longer win the title (name dims); `champion`: the leader has clinched it.
+function GapRow({ position, constructorId, name, sub, points, leaderPoints, to, out, champion }) {
   const { t, fmt } = useI18n();
   const share = leaderPoints > 0 ? Math.max(0, Number(points) / leaderPoints) : 0;
   const gap = leaderPoints - Number(points);
@@ -226,7 +258,8 @@ function GapRow({ position, constructorId, name, sub, points, leaderPoints, to }
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">
             <span className="min-w-0 flex-1 truncate">
-              <span className="font-semibold text-ink">{name}</span>
+              <span className={`font-semibold ${out ? "text-ink-3" : "text-ink"}`}>{name}</span>
+              {out && <span className="sr-only"> ({t("overview.maths.out")})</span>}
               {sub && <span className="ml-2 text-xs text-ink-2">{sub}</span>}
             </span>
             <span className="shrink-0 font-semibold text-ink">
@@ -240,9 +273,11 @@ function GapRow({ position, constructorId, name, sub, points, leaderPoints, to }
                 style={{ width: `${share * 100}%` }}
               />
             </span>
-            <span className="w-16 shrink-0 text-right text-sm">
+            <span className="w-20 shrink-0 text-right text-sm">
               {isLeader ? (
-                <span className="font-semibold uppercase text-best">{t("common.leader")}</span>
+                <span className="font-semibold uppercase text-best">
+                  {t(champion ? "overview.maths.champion" : "common.leader")}
+                </span>
               ) : (
                 <span className="text-ink-2">
                   −{fmt.points(gap)}
@@ -257,11 +292,34 @@ function GapRow({ position, constructorId, name, sub, points, leaderPoints, to }
   );
 }
 
-function TopFive({ kind, query, allTo, toRow }) {
+// Title maths line under the top five: points still available and who can still win.
+function TitleMaths({ maths, leaderName }) {
+  const { t, fmt } = useI18n();
+  return (
+    <div className="border-t border-line px-3 pt-2.5 pb-1 text-sm sm:px-4">
+      {maths.decided ? (
+        <p className="font-semibold text-ink">{t("overview.maths.clinched", { name: leaderName })}</p>
+      ) : (
+        <p className="text-ink-2">
+          <span className="font-semibold text-ink">{t("overview.maths.left", { points: fmt.points(maths.max) })}</span>
+          {" · "}
+          {t("overview.maths.weekends", { count: maths.races, n: maths.races })}
+          {" · "}
+          {t("overview.maths.contenders", { count: maths.contenders, n: maths.contenders })}
+        </p>
+      )}
+      {maths.tieOnly && <p className="mt-1 text-xs text-ink-3">{t("overview.maths.tie")}</p>}
+    </div>
+  );
+}
+
+function TopFive({ kind, query, allTo, toRow, maths }) {
   const { t } = useI18n();
   const { data, isPending, error, refetch } = query;
   if (error) return <ErrorState title={t(`overview.${kind}.error`)} onRetry={refetch} />;
-  const rows = (data?.standings ?? []).slice(0, 5).map(toRow);
+  const rows = (data?.standings ?? [])
+    .slice(0, 5)
+    .map((s) => ({ ...toRow(s), out: !!maths && !maths.isIn(s), champion: !!maths?.decided }));
   const leaderPoints = Number(rows[0]?.points ?? 0);
   return (
     <Card
@@ -274,11 +332,14 @@ function TopFive({ kind, query, allTo, toRow }) {
       ) : rows.length === 0 ? (
         <p className="px-4 py-6 text-sm text-ink-2">{t("overview.noScores")}</p>
       ) : (
-        <ol className="tower divide-y divide-line" aria-label={t(`overview.${kind}.top5`)}>
-          {rows.map((row) => (
-            <GapRow key={row.id} {...row} leaderPoints={leaderPoints} />
-          ))}
-        </ol>
+        <>
+          <ol className="tower divide-y divide-line" aria-label={t(`overview.${kind}.top5`)}>
+            {rows.map((row) => (
+              <GapRow key={row.id} {...row} leaderPoints={leaderPoints} />
+            ))}
+          </ol>
+          {maths && <TitleMaths maths={maths} leaderName={rows[0].name} />}
+        </>
       )}
     </Card>
   );
@@ -294,6 +355,24 @@ function Overview() {
   const constructorsQ = useConstructorStandings();
   const nextQ = useNextRace();
   const lastQ = useLastRaceResults();
+  const scheduleQ = useSchedule(undefined, { enabled: isCurrent });
+  const now = useNow(60_000);
+  const maths = (q, kind) =>
+    isCurrent ? titleMaths(q.data?.standings, scheduleQ.data, q.data?.round, kind, now) : null;
+
+  // Once Jolpica classifies a race, "next" moves on a round: pull the new result and standings
+  // straight away instead of waiting for each query to go stale.
+  const queryClient = useQueryClient();
+  const nextRound = nextQ.data?.round;
+  const seenRound = useRef(nextRound);
+  useEffect(() => {
+    if (seenRound.current && nextRound && nextRound !== seenRound.current) {
+      for (const key of ["lastRaceResults", "driverStandings", "constructorStandings", "seasonResults", "seasonSprints"]) {
+        queryClient.invalidateQueries({ queryKey: [key, "current"] });
+      }
+    }
+    seenRound.current = nextRound;
+  }, [nextRound, queryClient]);
 
   const standings = driversQ.data;
   const title = standings?.season ? t("common.season.title", { season: standings.season }) : t("overview.title");
@@ -329,6 +408,7 @@ function Overview() {
           <TopFive
             kind="drivers"
             query={driversQ}
+            maths={maths(driversQ, "drivers")}
             allTo={withSeason("/drivers")}
             toRow={(s) => ({
               id: s.Driver.driverId,
@@ -343,6 +423,7 @@ function Overview() {
           <TopFive
             kind="constructors"
             query={constructorsQ}
+            maths={maths(constructorsQ, "constructors")}
             allTo={withSeason("/constructors")}
             toRow={(s) => ({
               id: s.Constructor.constructorId,
