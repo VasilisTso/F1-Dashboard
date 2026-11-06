@@ -1,52 +1,19 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useRef } from "react";
+import { useSchedule, useSeasonResults } from "../hooks/queries";
 
 function Races() {
-  const [calendar, setCalendar] = useState([]);
-  const [results, setResults] = useState({});
-  const [loading, setLoading] = useState(true);
   const raceRefs = useRef({});
-  
-  const [selectedRace, setSelectedRace] = useState(null);
-  const [nextRaceRound, setNextRaceRound] = useState(null);
+  const scheduleQ = useSchedule();
+  const resultsQ = useSeasonResults();
 
-  useEffect(() => {
-    const fetchRaces = async () => {
-      try {
-        const res = await fetch("https://api.jolpi.ca/ergast/f1/current.json");
-        const data = await res.json();
-        const races = data?.MRData?.RaceTable?.Races || [];
-        setCalendar(races);
+  const calendar = scheduleQ.data ?? [];
+  const results = resultsQ.data ?? {};
 
-        // Find next upcoming race
-        const today = new Date();
-        const next = races.find((r) => new Date(r.date) > today);
-        setNextRaceRound(next ? next.round : null);
-
-        // Fetch results for each round sequentially
-        const resultsData = {};
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-        for (const race of races) {
-          await delay(300); // avoid API throttling
-          const resRound = await fetch(
-            `https://api.jolpi.ca/ergast/f1/${race.season}/${race.round}/results.json`
-          );
-          const roundData = await resRound.json();
-          resultsData[race.round] = roundData?.MRData?.RaceTable?.Races[0]?.Results || [];
-        }
-        setResults(resultsData);
-
-        // Default select next race if exists, else last race
-        setSelectedRace(next ? next.round : races[races.length - 1]?.round);
-      } catch (err) {
-        console.error("Error fetching races:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRaces();
-  }, []);
+  // Next upcoming race (none for past seasons)
+  const today = new Date();
+  const nextRaceRound = calendar.find((r) => new Date(r.date) > today)?.round ?? null;
+  // Highlight the next race if there is one, else the last race
+  const selectedRace = nextRaceRound ?? calendar.at(-1)?.round;
 
   const scrollToRace = (round) => {
     const element = raceRefs.current[round];
@@ -58,12 +25,11 @@ function Races() {
       // Temporary highlight
       element.classList.add("ring-2", "ring-[#E10600]");
       setTimeout(() => element.classList.remove("ring-2", "ring-[#E10600]"), 1500);
-    } else {
-      console.log("No element found for round", round);
     }
   };
 
-  if (loading) return <div className="p-8 text-gray-300">Loading races...</div>;
+  if (scheduleQ.isPending) return <div className="p-8 text-gray-300">Loading races...</div>;
+  if (scheduleQ.error) return <div className="p-8 text-red-400">Error: {String(scheduleQ.error.message || scheduleQ.error)}</div>;
 
   return (
     <div className="p-4">
@@ -102,6 +68,9 @@ function Races() {
           </div>
         </div>
       </div>
+
+      {resultsQ.isPending && <p className="px-4 text-gray-400">Loading results...</p>}
+      {resultsQ.error && <p className="px-4 text-red-400">Couldn't load results: {resultsQ.error.message}</p>}
 
       {/* ===== Races Grid ===== */}
       <div className="p-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">

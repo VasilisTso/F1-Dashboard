@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { getDrivers, getDriverStandings } from "../api/jolpica";
+import React, { useState } from "react";
 import { GiFullMotorcycleHelmet, GiTrophyCup } from "react-icons/gi";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useDrivers, useDriverStandings } from "../hooks/queries";
+import { useSeason } from "../context/SeasonContext";
+import { getTeamColor } from "../lib/teams";
 
 const DriverModal = ({ driver, onClose}) => {
     if (!driver) return null;
@@ -41,88 +43,52 @@ const DriverModal = ({ driver, onClose}) => {
     );
 };
 
-const teamColors = {
-  "Red Bull": "#264287",
-  "Ferrari": "#EF1A2D",
-  "McLaren": "#FF8000",
-  "Mercedes": "#00A19B",
-  "Aston Martin": "#037A68",
-  "Williams": "#1868DB",
-  "RB F1 Team": "#FFFFFF",
-  "Haas F1 Team": "#9C9FA2",
-  "Alpine F1 Team": "#960963",
-  "Audi": "#F50537",
-  "Cadillac F1 Team": "#FFB81C"
-};
 
 function Drivers() {
-    const [drivers, setDrivers] = useState([]);
     const [search, setSearch] = useState("");
     const [selected, setSelected] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [driverStandings, setDriverStandings] = useState([]);
-
-    // detect ?team= param from URL Constructors page
-    const location = useLocation();
+    const { withSeason } = useSeason();
     const navigate = useNavigate();
-    const queryParams = new URLSearchParams(location.search);
-    const teamFilter = queryParams.get("team") || "";
 
-    useEffect(() => {
-        Promise.all([
-            getDrivers(),
-            getDriverStandings()
-        ])
-            .then(([driversRes, standingsRes]) => {
-                const driversList = driversRes?.MRData?.DriverTable?.Drivers || [];
-                const standingsList =
-                    standingsRes?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings || [];
+    // ?team=<constructorId> from the Constructors page
+    const [searchParams] = useSearchParams();
+    const teamFilter = searchParams.get("team") || "";
 
-                // Map driverId → constructor name
-                const constructorMap = {};
-                standingsList.forEach(s => {
-                    if (s.Driver?.driverId && s.Constructors?.[0]?.name) {
-                        constructorMap[s.Driver.driverId] = s.Constructors[0].name;
-                    }
-                });
+    const driversQ = useDrivers();
+    const standingsQ = useDriverStandings();
 
-                // Merge constructor info into driver list
-                const merged = driversList.map(d => ({
-                    ...d,
-                    constructorName: constructorMap[d.driverId] || "—",
-                }));
+    if (driversQ.isPending || standingsQ.isPending) return <div className="p-8 text-gray-300">Loading drivers...</div>;
+    const err = driversQ.error || standingsQ.error;
+    if (err) return <div className="p-8 text-red-400">Error: {String(err.message || err)}</div>;
 
-                // sort by team to render together
-                merged.sort((a, b) => {
-                    const teamA = a.constructorName || "";
-                    const teamB = b.constructorName || "";
-                    if (teamA < teamB) return -1;
-                    if (teamA > teamB) return 1;
-                    // If same team, sort by family name
-                    return a.familyName.localeCompare(b.familyName);
-                })
+    const driverStandings = standingsQ.data.standings;
+    const seasonLabel = standingsQ.data.season;
 
-                setDrivers(merged);
+    // driverId -> latest constructor of the season
+    const constructorMap = {};
+    driverStandings.forEach((s) => {
+        const c = s.Constructors?.at(-1);
+        if (s.Driver?.driverId && c) constructorMap[s.Driver.driverId] = c;
+    });
 
-                // store standings separately for leaderboard
-                setDriverStandings(standingsList);
-            })
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
-    }, [])
+    // Merge constructor info, sort by team then family name so teammates render together
+    const drivers = driversQ.data
+        .map((d) => {
+            const c = constructorMap[d.driverId];
+            return { ...d, constructorId: c?.constructorId ?? "", constructorName: c?.name ?? "—" };
+        })
+        .sort((a, b) => a.constructorName.localeCompare(b.constructorName) || a.familyName.localeCompare(b.familyName));
+
+    const teamFilterName = drivers.find((d) => d.constructorId === teamFilter)?.constructorName || teamFilter;
 
     // Apply both search filter and team filter
     const filtered = drivers.filter((d) => {
         const matchesSearch = `${d.givenName} ${d.familyName}`
             .toLowerCase()
             .includes(search.toLowerCase());
-        const matchesTeam = teamFilter
-            ? d.constructorName?.toLowerCase() === teamFilter.toLowerCase()
-            : true;
+        const matchesTeam = teamFilter ? d.constructorId === teamFilter : true;
         return matchesSearch && matchesTeam;
     });
-
-    if (loading) return <div className="p-8 text-gray-300">Loading drivers...</div>;
 
     return (
         <div className="p-6">
@@ -130,13 +96,12 @@ function Drivers() {
             {driverStandings.length > 0 && (
                 <div className="bg-[#121212] rounded-2xl p-4 mb-6 border border-gray-700">
                     <h2 className="text-xl font-semibold text-white mb-4">
-                        Drivers Championship 2025
+                        Drivers Championship {seasonLabel}
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {driverStandings.map((driver, index) => {
                             const d = driver.Driver;
-                            const teamName = driver.Constructors?.[0]?.name;
-                            const teamColor = teamColors[teamName] || "#1A1A1A";
+                            const teamColor = getTeamColor(driver.Constructors?.at(-1)?.constructorId);
 
                             return (
                                 <div
@@ -162,9 +127,9 @@ function Drivers() {
             {teamFilter && (
                 <div className="mb-6 text-gray-300">
                     Showing drivers for{" "}
-                    <span className="font-bold text-white">{teamFilter}</span>
+                    <span className="font-bold text-white">{teamFilterName}</span>
                     <button
-                        onClick={() => navigate("/drivers")}
+                        onClick={() => navigate(withSeason("/drivers"))}
                         className="ml-3 text-[#E10600] underline text-sm hover:text-white cursor-pointer"
                     >
                         Clear filter
@@ -186,7 +151,7 @@ function Drivers() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
                 {filtered.map(d => {
                     // background based on team color
-                    const teamColor = teamColors[d.constructorName] || "#1A1A1A";
+                    const teamColor = getTeamColor(d.constructorId);
 
                     return (
                         <div key={d.driverId} onClick={() => setSelected(d)}

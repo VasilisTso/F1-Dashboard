@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { getConstructorStandings } from "../api/jolpica";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useConstructorHistory, useConstructorStandings } from "../hooks/queries";
+import { useSeason } from "../context/SeasonContext";
+import { getTeamColor } from "../lib/teams";
 import { RiTeamFill } from "react-icons/ri";
 import { GiTrophyCup } from "react-icons/gi";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,86 +15,17 @@ import {
   Bar,
 } from "recharts";
 
-const teamColors = {
-  "Red Bull": "#264287",
-  "Ferrari": "#EF1A2D",
-  "McLaren": "#FF8000",
-  "Mercedes": "#00A19B",
-  "Aston Martin": "#037A68",
-  "Williams": "#1868DB",
-  "RB F1 Team": "#FFFFFF",
-  "Haas F1 Team": "#9C9FA2",
-  "Alpine F1 Team": "#960963",
-  "Audi": "#F50537",
-  "Cadillac F1 Team": "#FFB81C"
-};
-
 const ConstructorModal = ({ team, onClose }) => {
-  const [history, setHistory] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: yearlyPoints, isPending: loading, error } = useConstructorHistory(team?.constructorId);
 
-  useEffect(() => {
-    if (!team) return;
-
-    // fetch full history of constructor standings
-    const fetchHistory = async () => {
-      try {
-        // Step 1 — get list of seasons this team raced
-        const resSeasons = await fetch(
-          `https://api.jolpi.ca/ergast/f1/constructors/${team.constructorId}/seasons.json?limit=1000`
-        );
-        const dataSeasons = await resSeasons.json();
-        const seasons = dataSeasons?.MRData?.SeasonTable?.Seasons || [];
-
-        let totalPoints = 0;
-        let totalWins = 0;
-        // for chart
-        const yearlyPoints = [];
-        
-        // helper before your loop, add delay since there are too many requests
-        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-        // Step 2 — loop through seasons to sum stats
-        for (const s of seasons) {
-          const year = s.season;
-
-          // 300 ms pause between each API call (adjust if needed)
-          await delay(500);
-
-          const res = await fetch(
-            `https://api.jolpi.ca/ergast/f1/${year}/constructors/${team.constructorId}/constructorStandings.json`
-          );
-          const data = await res.json();
-          const standing =
-            data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings?.[0];
-          if (standing) {
-            const pts = parseFloat(standing.points || 0); // for chart
-            totalPoints += pts;
-            totalWins += parseInt(standing.wins || 0);
-            yearlyPoints.push({ season: year, points: pts }); // for chart
-          }
-        }
-
-        const firstSeason = seasons[0]?.season || null;
-        const lastSeason = seasons[seasons.length - 1]?.season || null;
-
-        setHistory({
-          totalPoints,
-          totalWins,
-          seasons: seasons.length,
-          firstSeason,
-          lastSeason,
-          yearlyPoints, // for chart
-        });
-      } catch (err) {
-        console.error("Error fetching constructor history:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-  }, [team]);
+  const history = yearlyPoints && {
+    totalPoints: yearlyPoints.reduce((sum, y) => sum + y.points, 0),
+    totalWins: yearlyPoints.reduce((sum, y) => sum + y.wins, 0),
+    seasons: yearlyPoints.length,
+    firstSeason: yearlyPoints[0]?.season ?? null,
+    lastSeason: yearlyPoints.at(-1)?.season ?? null,
+    yearlyPoints,
+  };
 
   if (!team) return null;
 
@@ -121,16 +52,13 @@ const ConstructorModal = ({ team, onClose }) => {
           <p>
             <span className="font-semibold">Position:</span> {team.position}
           </p>
-          <p>
-            <span className="font-semibold">Seasons Participated:</span>{" "}
-            {team.seasons || "—"}
-          </p>
         </div>
 
         {/* Lifetime Stats */}
         <div className="mt-8">
           <h3 className="text-2xl font-bold mb-3">Team Lifetime Stats</h3>
           {loading && <p className="text-gray-400">Loading stats...</p>}
+          {error && <p className="text-red-400">Couldn't load history: {error.message}</p>}
           {history && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -188,60 +116,21 @@ const ConstructorModal = ({ team, onClose }) => {
 };
 
 function Constructors() {
-  const [constructors, setConstructors] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { withSeason } = useSeason();
+  const { data, isPending, error } = useConstructorStandings();
 
-  useEffect(() => {
-  const fetchConstructors = async () => {
-    try {
-      const res = await getConstructorStandings();
-      const list =
-        res?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
+  if (isPending) return <div className="p-8 text-gray-300">Loading constructors...</div>;
+  if (error) return <div className="p-8 text-red-400">Error: {String(error.message || error)}</div>;
 
-      // Fetch season history for each team (optional extra)
-      const teamsWithHistory = await Promise.all(
-        list.map(async (item) => {
-          const constructor = item.Constructor;
-          let seasons = null;
-          try {
-            const seasonRes = await fetch(
-              `https://api.jolpi.ca/ergast/f1/constructors/${constructor.constructorId}/seasons.json`
-            );
-            const data = await seasonRes.json();
-            seasons =
-              data?.MRData?.SeasonTable?.Seasons?.length ||
-              data?.MRData?.SeasonTable?.total ||
-              0;
-          } catch {
-            seasons = null;
-          }
-
-          return {
-            constructorId: constructor.constructorId,
-            name: constructor.name,
-            nationality: constructor.nationality,
-            url: constructor.url,
-            points: item.points,
-            wins: item.wins,
-            position: item.position,
-            seasons,
-          };
-        })
-      );
-
-      setConstructors(teamsWithHistory);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchConstructors();
-}, []);
+  const constructors = data.standings.map((item) => ({
+    ...item.Constructor,
+    points: item.points,
+    wins: item.wins,
+    position: item.position,
+  }));
 
   const ranked = [...constructors].sort(
     (a, b) => parseFloat(b.points) - parseFloat(a.points)
@@ -251,18 +140,16 @@ function Constructors() {
   c.name.toLowerCase().includes(search.toLowerCase())
 );
 
-  if (loading) return <div className="p-8 text-gray-300">Loading constructors...</div>;
-
   return (
     <div className="p-6">
       {/* LEADERBOARD SECTION */}
       <div className="bg-[#121212] rounded-2xl p-4 mb-8 border border-gray-700">
         <h2 className="text-xl font-semibold text-white mb-4">
-          Constructors Championship 2025
+          Constructors Championship {data.season}
         </h2>
         <div className="space-y-2">
           {ranked.map((team) => {
-            const teamColor = teamColors[team.name] || "#1A1A1A";
+            const teamColor = getTeamColor(team.constructorId);
 
             return (
               <div
@@ -294,7 +181,7 @@ function Constructors() {
       {/* GRID OF TEAM CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
         {filtered.map((t) => {
-          const teamColor = teamColors[t.name] || "#1A1A1A";
+          const teamColor = getTeamColor(t.constructorId);
 
           return (
             <div
@@ -319,7 +206,7 @@ function Constructors() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/drivers?team=${encodeURIComponent(t.name)}`);
+                    navigate(withSeason("/drivers", { team: t.constructorId }));
                   }}
                   className="mt-3 bg-gray-600 text-white px-3 py-1 rounded-md text-md hover:bg-gray-600 cursor-pointer"
                 >

@@ -4,18 +4,21 @@ import { SiF1 } from "react-icons/si";
 import { GiFullMotorcycleHelmet, GiF1Car } from "react-icons/gi";
 import { FaFlagCheckered } from "react-icons/fa";
 import { RiTeamFill } from "react-icons/ri";
+import { useSeason } from "../context/SeasonContext";
 
-
-const LinkItem = ({ to, children }) => (
-  <NavLink
-    to={to}
-    className={({ isActive }) =>
-      `flex items-center gap-3 px-4 py-3 rounded-lg text-sm ${isActive ? "bg-[#141414] text-white" : "text-gray-400 hover:bg-[#111111]"}`
-    }
-  >
-    {children}
-  </NavLink>
-);
+const LinkItem = ({ to, children }) => {
+  const { withSeason } = useSeason();
+  return (
+    <NavLink
+      to={withSeason(to)}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-4 py-3 rounded-lg text-sm ${isActive ? "bg-[#141414] text-white" : "text-gray-400 hover:bg-[#111111]"}`
+      }
+    >
+      {children}
+    </NavLink>
+  );
+};
 
 function Sidebar() {
   return (
