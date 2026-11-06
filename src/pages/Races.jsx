@@ -6,23 +6,19 @@ import { useSchedule, useSeasonResults } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
 import { useNow } from "../hooks/useNow";
 import { countryFlag } from "../lib/countries";
-import { ErrorState, FinishCell, PageHeader, Skeleton, TeamStripe } from "../components/ui";
-
-const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
+import { ErrorState, FinishCell, PageHeader, Skeleton, TeamStripe, ZoneLabel, useZone } from "../components/ui";
+import { useI18n } from "../i18n/LanguageContext";
+import { useDataLabels } from "../i18n/data";
 
 // Race start; races without a time count from the end of the day so they aren't "done" too early.
 const raceStart = (race) => new Date(race.time ? `${race.date}T${race.time}` : `${race.date}T23:59:59`);
 
-const shortDate = (race) =>
-  new Date(`${race.date}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
-
-const fullDate = (race) =>
-  raceStart(race).toLocaleString(undefined, {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    ...(race.time ? { hour: "2-digit", minute: "2-digit" } : {}),
-  });
+const fullDateOpts = (race) => ({
+  weekday: "short",
+  day: "numeric",
+  month: "long",
+  ...(race.time ? { hour: "2-digit", minute: "2-digit" } : {}),
+});
 
 // A race runs ~2h; until results land it stays "next" for a while after lights out.
 const RACE_WINDOW = 3 * 60 * 60 * 1000;
@@ -41,9 +37,8 @@ const withStatus = (calendar, results, now) => {
   });
 };
 
-const STATUS_LABEL = { done: "Finished", next: "Next", upcoming: "Upcoming" };
-
 function StatusChip({ status }) {
+  const { t } = useI18n();
   const style = {
     done: "border-line text-ink-3",
     next: "border-accent bg-accent text-on-accent",
@@ -51,7 +46,7 @@ function StatusChip({ status }) {
   }[status];
   return (
     <span className={`rounded-panel border px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider ${style}`}>
-      {STATUS_LABEL[status]}
+      {t(`races.status.${status}`)}
     </span>
   );
 }
@@ -59,6 +54,7 @@ function StatusChip({ status }) {
 // ---- Calendar strip --------------------------------------------------------
 
 function CalendarStrip({ races, selected, onSelect }) {
+  const { t, fmt } = useI18n();
   const listRef = useRef(null);
   const nextRound = races.find((r) => r.status === "next")?.round;
   // Start the strip at the next race (or the end of a finished season) instead of round 1.
@@ -70,7 +66,7 @@ function CalendarStrip({ races, selected, onSelect }) {
   }, [nextRound]);
 
   return (
-    <nav aria-label="Race calendar" className="mb-8">
+    <nav aria-label={t("races.calendar")} className="mb-8">
       {/* `relative` keeps the chips' sr-only text inside the scroll box (it would widen the page). */}
       <ol ref={listRef} className="relative -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         {races.map((race) => (
@@ -85,7 +81,7 @@ function CalendarStrip({ races, selected, onSelect }) {
             >
               <span className="flex items-center justify-between">
                 <span className={`font-display text-lg ${race.status === "done" ? "text-ink-3" : "text-ink"}`}>
-                  R{race.round}
+                  {t("races.roundShort", { round: race.round })}
                 </span>
                 <span aria-hidden>{countryFlag(race.Circuit.Location.country)}</span>
               </span>
@@ -93,8 +89,8 @@ function CalendarStrip({ races, selected, onSelect }) {
                 {race.Circuit.Location.locality}
               </span>
               <span className="text-xs text-ink-3">
-                {shortDate(race)}
-                <span className="sr-only"> · {STATUS_LABEL[race.status]}</span>
+                {fmt.day(race.date, { day: "numeric", month: "short" })}
+                <span className="sr-only"> · {t(`races.status.${race.status}`)}</span>
               </span>
             </a>
           </li>
@@ -107,6 +103,7 @@ function CalendarStrip({ races, selected, onSelect }) {
 // ---- Race card -------------------------------------------------------------
 
 function ResultList({ results, withSeason }) {
+  const { fmt } = useI18n();
   return (
     <ol className="tower divide-y divide-line border-t border-line">
       {results.map((r) => (
@@ -122,14 +119,16 @@ function ResultList({ results, withSeason }) {
             {r.Driver.givenName} {r.Driver.familyName}
             <span className="ml-2 text-xs text-ink-2">{r.Constructor.name}</span>
           </Link>
-          <span className="w-10 shrink-0 text-right font-semibold text-ink">{formatPoints(r.points)}</span>
+          <span className="w-10 shrink-0 text-right font-semibold text-ink">{fmt.points(r.points)}</span>
         </li>
       ))}
     </ol>
   );
 }
 
-function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
+function RaceCard({ race, results, resultsLoading, selected, withSeason, zone }) {
+  const { t, fmt } = useI18n();
+  const { country } = useDataLabels();
   const [open, setOpen] = useState(false);
   // MotionConfig only strips transforms; height would still animate, so skip it here.
   const reduceMotion = useReducedMotion();
@@ -148,7 +147,7 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
     >
       <div className="p-4">
         <div className="flex items-center justify-between gap-2">
-          <span className="label-caps">Round {race.round}</span>
+          <span className="label-caps">{t("races.round", { round: race.round })}</span>
           <StatusChip status={race.status} />
         </div>
         <h3 className="mt-2 font-display text-2xl uppercase text-ink text-balance">
@@ -158,13 +157,17 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
         </h3>
         <p className="mt-1 text-sm text-ink-2">
           <span aria-hidden>{countryFlag(loc.country)} </span>
-          {loc.locality}, {loc.country}
+          {loc.locality}, {country(loc.country)}
         </p>
         <p className="text-xs text-ink-3">
           {race.Circuit.circuitName} ·{" "}
           {/* nowrap: the date and start time break as one unit, never a lone "19:00". */}
-          <time dateTime={race.date} className="whitespace-nowrap">
-            {fullDate(race)}
+          <time
+            dateTime={race.time ? raceStart(race).toISOString() : race.date}
+            title={race.time ? zone.utc(raceStart(race)) : undefined}
+            className="whitespace-nowrap"
+          >
+            {fmt.date(raceStart(race), fullDateOpts(race))}
           </time>
         </p>
       </div>
@@ -174,7 +177,7 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
           <div className="flex items-center gap-3 px-4 py-3">
             <TeamStripe constructorId={winner.Constructor.constructorId} className="h-9" />
             <div className="min-w-0 flex-1">
-              <p className="label-caps">Winner</p>
+              <p className="label-caps">{t("races.winner")}</p>
               <p className="truncate font-semibold text-ink">
                 {winner.Driver.givenName} {winner.Driver.familyName}
               </p>
@@ -187,7 +190,7 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
           </div>
         ) : (
           <p className="px-4 py-3 text-sm text-ink-2">
-            {race.status === "done" ? "Results not published yet." : "Results appear after the chequered flag."}
+            {t(race.status === "done" ? "races.notPublished" : "races.afterFlag")}
           </p>
         )}
 
@@ -219,7 +222,7 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
                 className={`size-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
                 aria-hidden
               />
-              {open ? "Hide result" : "Full result"}
+              {t(open ? "races.hideResult" : "races.fullResult")}
             </button>
           ) : (
             <span />
@@ -228,7 +231,7 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
             to={detailTo}
             className="inline-flex h-10 items-center gap-1 rounded-panel px-2 text-sm font-medium text-ink hover:bg-surface-3 transition-colors duration-150"
           >
-            Race details <LuArrowRight className="size-4" aria-hidden />
+            {t("races.details")} <LuArrowRight className="size-4" aria-hidden />
             <span className="sr-only">: {race.raceName}</span>
           </Link>
         </div>
@@ -240,17 +243,19 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
 // ---- Page ------------------------------------------------------------------
 
 function Races() {
+  const { t } = useI18n();
   const { withSeason } = useSeason();
   const scheduleQ = useSchedule();
   const resultsQ = useSeasonResults();
   const now = useNow(60_000);
+  const zone = useZone();
   // Race picked in the calendar strip (also restored from a #round-N link).
   const [selected, setSelected] = useState(() => window.location.hash.match(/^#round-(\d+)$/)?.[1] ?? null);
 
   if (scheduleQ.error) {
     return (
       <>
-        <PageHeader title="Races" />
+        <PageHeader title={t("races.title")} />
         <ErrorState onRetry={scheduleQ.refetch} />
       </>
     );
@@ -260,14 +265,21 @@ function Races() {
   const races = withStatus(scheduleQ.data ?? [], results, now);
   const finished = races.filter((r) => r.status === "done").length;
   const meta = scheduleQ.isPending
-    ? "Loading calendar…"
+    ? t("races.loading")
     : races.length
-      ? `${races[0].season} season · ${races.length} rounds · ${finished} finished`
-      : "No calendar for this season yet";
+      ? [
+          t("common.season.title", { season: races[0].season }),
+          t("races.rounds", { count: races.length, n: races.length }),
+          t("races.finishedCount", { count: finished, n: finished }),
+        ].join(" · ")
+      : t("races.noCalendarYet");
 
   return (
     <>
-      <PageHeader title="Races" meta={meta} />
+      <PageHeader title={t("races.title")} meta={meta}>
+        {/* Named once for the page; every card's time is in this zone (tooltip: UTC). */}
+        {races.length > 0 && <ZoneLabel at={raceStart(races.find((r) => r.status === "next") ?? races.at(-1))} className="mt-1 flex w-fit" />}
+      </PageHeader>
 
       {scheduleQ.isPending ? (
         <>
@@ -276,30 +288,30 @@ function Races() {
               <Skeleton key={i} className="h-20 w-28 shrink-0" />
             ))}
           </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 wide:grid-cols-4">
             {Array.from({ length: 6 }, (_, i) => (
               <Skeleton key={i} className="h-60" />
             ))}
           </div>
         </>
       ) : races.length === 0 ? (
-        <ErrorState tone="empty" title="No races" message="This season has no calendar yet." />
+        <ErrorState tone="empty" title={t("races.noRaces")} message={t("races.noCalendar")} />
       ) : (
         <>
           <CalendarStrip races={races} selected={selected} onSelect={setSelected} />
           {resultsQ.error && (
             <ErrorState
               className="mb-6"
-              title="Couldn't load results"
-              message="The calendar loaded but race results didn't. Winners will show once they load."
+              title={t("races.resultsError")}
+              message={t("races.resultsErrorMessage")}
               onRetry={resultsQ.refetch}
             />
           )}
           <section aria-labelledby="rounds-heading">
             <h2 id="rounds-heading" className="sr-only">
-              Rounds
+              {t("races.roundsHeading")}
             </h2>
-            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 wide:grid-cols-4">
               {races.map((race) => (
                 <RaceCard
                   key={race.round}
@@ -308,6 +320,7 @@ function Races() {
                   resultsLoading={resultsQ.isPending}
                   selected={selected === race.round}
                   withSeason={withSeason}
+                  zone={zone}
                 />
               ))}
             </ul>

@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { LuArrowLeft, LuExternalLink, LuChevronRight } from "react-icons/lu";
+import { LuArrowLeft, LuChevronRight } from "react-icons/lu";
 import {
   useDriver,
   useDriverCareer,
@@ -10,6 +10,9 @@ import {
   useWikiSummary,
 } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
+import { WikiIntro } from "../components/WikiIntro";
+import { useI18n, useT } from "../i18n/LanguageContext";
+import { useDataLabels } from "../i18n/data";
 import {
   Card,
   ErrorState,
@@ -22,10 +25,6 @@ import {
   TeamStripe,
 } from "../components/ui";
 
-const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
-const formatDate = (iso, opts = { day: "numeric", month: "short", year: "numeric" }) =>
-  iso ? new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", opts) : null;
-
 const ageOn = (dob) => {
   if (!dob) return null;
   const birth = new Date(`${dob}T00:00:00`);
@@ -37,18 +36,21 @@ const ageOn = (dob) => {
 };
 
 function BackLink() {
+  const t = useT();
   const { withSeason } = useSeason();
   return (
     <Link
       to={withSeason("/drivers")}
       className="mb-4 -ml-2 inline-flex h-10 items-center gap-2 rounded-panel px-2 text-sm font-medium text-ink-2 hover:bg-surface-3 hover:text-ink transition-colors duration-150"
     >
-      <LuArrowLeft className="size-4" aria-hidden /> Drivers
+      <LuArrowLeft className="size-4" aria-hidden /> {t("common.nav.drivers")}
     </Link>
   );
 }
 
 function Hero({ driver, wiki, teamId }) {
+  const { t, fmt } = useI18n();
+  const { nationality } = useDataLabels();
   const photo = wiki?.thumbnail?.source;
   const age = ageOn(driver.dateOfBirth);
   return (
@@ -67,10 +69,14 @@ function Hero({ driver, wiki, teamId }) {
         </h1>
         <p className="mt-2 text-sm text-ink-2">
           {[
-            driver.nationality,
-            driver.dateOfBirth && `Born ${formatDate(driver.dateOfBirth)}${age != null ? ` (${age})` : ""}`,
+            nationality(driver.nationality),
+            driver.dateOfBirth &&
+              t(age != null ? "drivers.hero.bornAge" : "drivers.hero.born", {
+                date: fmt.day(driver.dateOfBirth, { day: "numeric", month: "short", year: "numeric" }),
+                age,
+              }),
             driver.code,
-            driver.permanentNumber && `Car #${driver.permanentNumber}`,
+            driver.permanentNumber && t("drivers.hero.car", { n: driver.permanentNumber }),
           ]
             .filter(Boolean)
             .join(" · ")}
@@ -88,81 +94,59 @@ function Hero({ driver, wiki, teamId }) {
 }
 
 function CareerStats({ driverId, teams }) {
+  const t = useT();
   const { data: career, isPending } = useDriverCareer(driverId);
   const span =
     career?.firstSeason &&
     (career.firstSeason === career.lastSeason ? career.firstSeason : `${career.firstSeason}–${career.lastSeason}`);
   return (
-    <section aria-label="Career statistics" className="mb-8">
+    <section aria-label={t("drivers.stats.label")} className="mb-8">
       <StatGrid className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile label="Seasons" value={career?.seasons} hint={span} loading={isPending} />
-        <StatTile label="Starts" value={career?.starts} loading={isPending} />
+        <StatTile label={t("drivers.stats.seasons")} value={career?.seasons} hint={span} loading={isPending} />
+        <StatTile label={t("drivers.stats.starts")} value={career?.starts} loading={isPending} />
         <StatTile
-          label="Wins"
+          label={t("common.wins")}
           value={career?.wins}
           accent={career?.wins > 0 ? "var(--best)" : undefined}
           loading={isPending}
         />
-        <StatTile label="Podiums" value={career?.podiums} loading={isPending} />
-        <StatTile label="Poles" value={career?.poles} loading={isPending} />
-        <StatTile label="Teams" value={teams?.length} hint="All time" loading={!teams} />
+        <StatTile label={t("drivers.stats.podiums")} value={career?.podiums} loading={isPending} />
+        <StatTile label={t("drivers.stats.poles")} value={career?.poles} loading={isPending} />
+        <StatTile
+          label={t("drivers.stats.teams")}
+          value={teams?.length}
+          hint={t("drivers.stats.allTime")}
+          loading={!teams}
+        />
       </StatGrid>
     </section>
   );
 }
 
-function Intro({ wiki, isPending, fallbackUrl }) {
-  return (
-    <Card title="About" className="h-full">
-      {isPending ? (
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-11/12" />
-          <Skeleton className="h-4 w-4/5" />
-        </div>
-      ) : (
-        <>
-          {wiki?.extract ? (
-            <p className="max-w-prose text-ink-2 text-pretty">{wiki.extract}</p>
-          ) : (
-            <p className="text-sm text-ink-2">No biography available.</p>
-          )}
-          {(wiki?.content_urls?.desktop?.page || fallbackUrl) && (
-            <a
-              href={wiki?.content_urls?.desktop?.page ?? fallbackUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong hover:decoration-ink"
-            >
-              Read more on Wikipedia <LuExternalLink className="size-3.5" aria-hidden />
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
-          )}
-        </>
-      )}
-    </Card>
-  );
-}
-
 function SeasonSummary({ standing, standingsQ }) {
+  const { t, fmt } = useI18n();
   const { withSeason } = useSeason();
   const label = standingsQ.data?.season;
   const team = standing?.Constructors?.at(-1);
   return (
-    <Card title={label ? `${label} season` : "Season"}>
+    <Card title={label ? t("common.season.title", { season: label }) : t("common.season.label")}>
       {standingsQ.isPending ? (
-        <SkeletonRows rows={2} label="Loading season" />
+        <SkeletonRows rows={2} label={t("drivers.season.loading")} />
       ) : standingsQ.error ? (
         <ErrorState onRetry={standingsQ.refetch} className="border-0 p-0" />
       ) : !standing ? (
-        <p className="text-sm text-ink-2">Not classified in the {label ?? "selected"} drivers' championship.</p>
+        <p className="text-sm text-ink-2">
+          {label
+            ? t("drivers.season.notClassified", { season: label })
+            : t("drivers.season.notClassifiedSelected")}
+        </p>
       ) : (
         <>
           <dl className="grid grid-cols-3 gap-3">
             {[
-              ["Position", standing.position ? `P${standing.position}` : "—"],
-              ["Points", formatPoints(standing.points)],
-              ["Wins", standing.wins],
+              [t("common.position"), standing.position ? `P${standing.position}` : "—"],
+              [t("common.points"), fmt.points(standing.points)],
+              [t("common.wins"), standing.wins],
             ].map(([k, v]) => (
               <div key={k}>
                 <dt className="label-caps">{k}</dt>
@@ -187,11 +171,13 @@ function SeasonSummary({ standing, standingsQ }) {
 }
 
 function Teams({ teamsQ }) {
+  const t = useT();
+  const { nationality } = useDataLabels();
   const { withSeason } = useSeason();
   return (
-    <Card title="Teams">
+    <Card title={t("drivers.teams.title")}>
       {teamsQ.isPending ? (
-        <SkeletonRows rows={2} label="Loading teams" />
+        <SkeletonRows rows={2} label={t("drivers.teams.loading")} />
       ) : teamsQ.error ? (
         <ErrorState onRetry={teamsQ.refetch} className="border-0 p-0" />
       ) : (
@@ -204,7 +190,7 @@ function Teams({ teamsQ }) {
               >
                 <TeamStripe constructorId={c.constructorId} className="h-6" />
                 <span className="min-w-0 flex-1 truncate font-semibold text-ink">{c.name}</span>
-                <span className="text-xs text-ink-3">{c.nationality}</span>
+                <span className="text-xs text-ink-3">{nationality(c.nationality)}</span>
                 <LuChevronRight className="size-4 shrink-0 text-ink-3" aria-hidden />
               </Link>
             </li>
@@ -219,6 +205,7 @@ const cell = "px-2 py-2 sm:px-4";
 const head = "label-caps px-2 pb-2 sm:px-4";
 
 function SeasonResults({ driverId, label }) {
+  const { t, fmt } = useI18n();
   const { data: races, isPending, error, refetch } = useDriverSeasonResults(driverId);
   const sprintsQ = useDriverSeasonSprints(driverId);
   const sprints = sprintsQ.data ?? {};
@@ -233,34 +220,47 @@ function SeasonResults({ driverId, label }) {
   });
 
   return (
-    <Card title={label ? `${label} race results` : "Race results"} bodyClassName="py-3">
+    <Card
+      title={label ? t("drivers.results.title", { season: label }) : t("drivers.results.titleNoSeason")}
+      bodyClassName="py-3"
+    >
       {isPending ? (
-        <SkeletonRows rows={8} label="Loading race results" />
+        <SkeletonRows rows={8} label={t("drivers.results.loading")} />
       ) : error ? (
         <div className="px-4">
           <ErrorState onRetry={refetch} className="border-0 p-0" />
         </div>
       ) : races.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-ink-2">No race results for this driver in the selected season.</p>
+        <p className="px-4 py-6 text-sm text-ink-2">{t("drivers.results.empty")}</p>
       ) : (
         <div className="relative overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line text-left">
-                <th scope="col" className={`${head} hidden w-12 text-right sm:table-cell`}>Rd</th>
-                <th scope="col" className={head}>Grand Prix</th>
-                <th scope="col" className={`${head} hidden text-right sm:table-cell`}>Grid</th>
-                <th scope="col" className={`${head} text-right`}>Finish</th>
-                <th scope="col" className={`${head} text-right`} title="Places gained (▲) or lost (▼) from grid to finish">
-                  Places
+                <th scope="col" className={`${head} hidden w-12 text-right sm:table-cell`}>
+                  {t("drivers.results.round")}
                 </th>
-                <th scope="col" className={`${head} text-right`} title="Points scored that weekend (race + sprint)">
-                  Pts
+                <th scope="col" className={head}>
+                  {t("drivers.results.grandPrix")}
                 </th>
-                <th scope="col" className={`${head} text-right`} title="Championship points after this round">
-                  Total
+                <th scope="col" className={`${head} hidden text-right sm:table-cell`}>
+                  {t("drivers.results.grid")}
                 </th>
-                <th scope="col" className={`${head} hidden md:table-cell`}>Status</th>
+                <th scope="col" className={`${head} text-right`}>
+                  {t("drivers.results.finish")}
+                </th>
+                <th scope="col" className={`${head} text-right`} title={t("common.places.hint")}>
+                  {t("drivers.results.places")}
+                </th>
+                <th scope="col" className={`${head} text-right`} title={t("drivers.results.ptsHint")}>
+                  {t("drivers.results.pts")}
+                </th>
+                <th scope="col" className={`${head} text-right`} title={t("drivers.results.totalHint")}>
+                  {t("drivers.results.total")}
+                </th>
+                <th scope="col" className={`${head} hidden md:table-cell`}>
+                  {t("drivers.results.status")}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -279,13 +279,13 @@ function SeasonResults({ driverId, label }) {
                         {race.raceName.replace(/ Grand Prix$/, " GP")}
                       </Link>
                       <span className="block text-xs text-ink-2">
-                        <span className="sm:hidden">R{race.round} · </span>
-                        {formatDate(race.date, { day: "numeric", month: "short" })}
+                        <span className="sm:hidden">{t("drivers.results.roundShort", { round: race.round })} · </span>
+                        {fmt.day(race.date, { day: "numeric", month: "short" })}
                         {r.Constructor && <span className="hidden sm:inline"> · {r.Constructor.name}</span>}
                       </span>
                     </td>
                     <td className={`${cell} hidden text-right text-ink-2 sm:table-cell`}>
-                      {Number(r.grid) ? r.grid : "PL"}
+                      {Number(r.grid) ? r.grid : t("drivers.results.pitLane")}
                     </td>
                     <td className={`${cell} text-right`}>
                       <FinishCell result={r} />
@@ -294,12 +294,14 @@ function SeasonResults({ driverId, label }) {
                       <PlacesCell result={r} />
                     </td>
                     <td className={`${cell} text-right`}>
-                      <span className="block font-semibold text-ink">{formatPoints(Number(r.points) + sprintPoints)}</span>
+                      <span className="block font-semibold text-ink">{fmt.points(Number(r.points) + sprintPoints)}</span>
                       {sprintPoints > 0 && (
-                        <span className="block whitespace-nowrap text-xs text-ink-2">{formatPoints(sprintPoints)} sprint</span>
+                        <span className="block whitespace-nowrap text-xs text-ink-2">
+                          {t("drivers.results.sprint", { count: sprintPoints, n: fmt.points(sprintPoints) })}
+                        </span>
                       )}
                     </td>
-                    <td className={`${cell} font-display text-right text-lg text-ink`}>{formatPoints(total)}</td>
+                    <td className={`${cell} font-display text-right text-lg text-ink`}>{fmt.points(total)}</td>
                     <td className={`${cell} hidden text-ink-2 md:table-cell`}>{r.status}</td>
                   </tr>
                 );
@@ -313,6 +315,7 @@ function SeasonResults({ driverId, label }) {
 }
 
 function DriverProfile({ driverId }) {
+  const t = useT();
   const driverQ = useDriver(driverId);
   const driver = driverQ.data;
   const wikiQ = useWikiSummary(driver?.url);
@@ -346,9 +349,9 @@ function DriverProfile({ driverId }) {
           <ErrorState onRetry={driverQ.refetch} />
         ) : (
           <ErrorState
-            title="Driver not found"
+            title={t("drivers.notFound.title")}
             titleAs="h1"
-            message={`There's no driver with the id “${driverId}”. Pick a driver from the drivers list.`}
+            message={t("drivers.notFound.message", { id: driverId })}
           />
         )}
       </>
@@ -366,7 +369,7 @@ function DriverProfile({ driverId }) {
       <CareerStats driverId={driverId} teams={teamsQ.data} />
       <div className="mb-8 grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <Intro wiki={wikiQ.data} isPending={wikiQ.isPending && !!driver.url} fallbackUrl={driver.url} />
+          <WikiIntro wiki={wikiQ.data} isPending={wikiQ.isPending && !!driver.url} fallbackUrl={driver.url} />
         </div>
         <div className="flex flex-col gap-6 lg:col-span-2">
           <SeasonSummary standing={standing} standingsQ={standingsQ} />

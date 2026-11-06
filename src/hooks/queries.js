@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as api from "../api/jolpica";
 import { useSeason } from "../context/SeasonContext";
+import { useI18n } from "../i18n/LanguageContext";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -213,10 +214,14 @@ export function useConstructorHistory(constructorId, seasons, { full = false } =
   };
 }
 
-export const useWikiSummary = (wikiUrl) =>
-  useQuery({
-    queryKey: ["wiki", wikiUrl],
-    queryFn: () => api.getWikiSummary(wikiUrl),
+export const useWikiSummary = (wikiUrl) => {
+  const { lang } = useI18n();
+  return useQuery({
+    queryKey: ["wiki", wikiUrl, lang],
+    queryFn: () => api.getWikiSummary(wikiUrl, lang),
     enabled: !!wikiUrl,
+    // Keep the same article's previous-language text on screen while the other loads.
+    placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[1] === wikiUrl ? prev : undefined),
     ...HISTORY,
   });
+};

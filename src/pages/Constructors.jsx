@@ -13,10 +13,12 @@ import {
   StandingsRow,
   TeamStripe,
 } from "../components/ui";
-
-const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
+import { useI18n, useT } from "../i18n/LanguageContext";
+import { useDataLabels } from "../i18n/data";
 
 function TeamCard({ team, profileTo, driversTo }) {
+  const { t, fmt } = useI18n();
+  const { nationality } = useDataLabels();
   return (
     <li className="relative flex flex-col rounded-panel border border-line bg-surface-2 shadow-raised transition-colors duration-150 hover:border-line-strong">
       <div className="flex items-start gap-3 p-4">
@@ -28,21 +30,21 @@ function TeamCard({ team, profileTo, driversTo }) {
               {team.name}
             </Link>
           </h3>
-          <p className="text-sm text-ink-2">{team.nationality}</p>
+          <p className="text-sm text-ink-2">{nationality(team.nationality)}</p>
         </div>
         <span className="font-display text-3xl text-ink-3">
-          <span className="sr-only">Position </span>
+          <span className="sr-only">{t("common.position")} </span>
           <span aria-hidden>P</span>
           {team.position}
         </span>
       </div>
       <dl className="grid grid-cols-2 border-t border-line">
         <div className="px-4 py-3">
-          <dt className="label-caps">Points</dt>
-          <dd className="font-display mt-1 text-2xl text-ink">{formatPoints(team.points)}</dd>
+          <dt className="label-caps">{t("common.points")}</dt>
+          <dd className="font-display mt-1 text-2xl text-ink">{fmt.points(team.points)}</dd>
         </div>
         <div className="border-l border-line px-4 py-3">
-          <dt className="label-caps">Wins</dt>
+          <dt className="label-caps">{t("common.wins")}</dt>
           <dd className="font-display mt-1 text-2xl text-ink">{team.wins}</dd>
         </div>
       </dl>
@@ -51,10 +53,10 @@ function TeamCard({ team, profileTo, driversTo }) {
           to={driversTo}
           className="relative z-10 inline-flex h-10 items-center rounded-panel px-2 -ml-2 text-sm font-medium text-ink-2 hover:bg-surface-3 hover:text-ink transition-colors duration-150"
         >
-          Drivers
+          {t("common.nav.drivers")}
         </Link>
         <span className="inline-flex items-center gap-1 text-sm font-medium text-ink" aria-hidden>
-          See more <LuArrowRight className="size-4" />
+          {t("constructors.teams.seeMore")} <LuArrowRight className="size-4" />
         </span>
       </div>
     </li>
@@ -62,6 +64,8 @@ function TeamCard({ team, profileTo, driversTo }) {
 }
 
 function Constructors() {
+  const t = useT();
+  const { nationality } = useDataLabels();
   const [search, setSearch] = useState("");
   const { withSeason } = useSeason();
   const { data, isPending, error, refetch } = useConstructorStandings();
@@ -69,7 +73,7 @@ function Constructors() {
   if (error) {
     return (
       <>
-        <PageHeader title="Constructors" />
+        <PageHeader title={t("common.nav.constructors")} />
         <ErrorState onRetry={refetch} />
       </>
     );
@@ -79,86 +83,94 @@ function Constructors() {
   const teams = standings.map((s) => ({ ...s.Constructor, points: s.points, wins: s.wins, position: s.position }));
   const leaderPoints = Number(teams[0]?.points ?? 0);
   const query = search.trim().toLowerCase();
-  const filtered = teams.filter(
-    (t) => t.name.toLowerCase().includes(query) || t.nationality.toLowerCase().includes(query),
+  // Matches the raw (English) nationality and the displayed one.
+  const filtered = teams.filter((team) =>
+    `${team.name} ${team.nationality} ${nationality(team.nationality)}`.toLowerCase().includes(query),
   );
 
   const meta = isPending
-    ? "Loading standings…"
+    ? t("constructors.meta.loading")
     : data.season
-      ? `${data.season} season · after round ${data.round}`
-      : "No standings yet for this season";
+      ? `${t("common.season.title", { season: data.season })} · ${t("constructors.meta.afterRound", { round: data.round })}`
+      : t("constructors.meta.none");
 
   return (
     <>
-      <PageHeader title="Constructors" meta={meta} />
+      <PageHeader title={t("common.nav.constructors")} meta={meta} />
 
-      <Card title="Championship standings" bodyClassName="py-3" className="mb-8">
-        {isPending ? (
-          <SkeletonRows rows={10} label="Loading constructor standings" />
-        ) : teams.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-ink-2">No races have been scored yet.</p>
-        ) : (
-          <StandingsList label="Team" showExtra="Wins" linked>
-            {teams.map((t) => (
-              <StandingsRow
-                key={t.constructorId}
-                position={t.position}
-                constructorId={t.constructorId}
-                name={t.name}
-                sub={t.nationality}
-                points={t.points}
-                gap={leaderPoints - Number(t.points)}
-                extra={t.wins}
-                to={withSeason(`/constructors/${t.constructorId}`)}
+      {/* Wide screens: standings and the cards sit side by side instead of stacking. */}
+      <div className="wide:grid wide:grid-cols-[minmax(0,38rem)_minmax(0,1fr)] wide:items-start wide:gap-6">
+        <Card title={t("constructors.standings.title")} bodyClassName="py-3" className="mb-8 wide:mb-0">
+          {isPending ? (
+            <SkeletonRows rows={10} label={t("constructors.standings.loading")} />
+          ) : teams.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-ink-2">{t("constructors.standings.empty")}</p>
+          ) : (
+            <StandingsList label={t("constructors.standings.team")} showExtra={t("common.wins")} linked>
+              {teams.map((team) => (
+                <StandingsRow
+                  key={team.constructorId}
+                  position={team.position}
+                  constructorId={team.constructorId}
+                  name={team.name}
+                  sub={nationality(team.nationality)}
+                  points={team.points}
+                  gap={leaderPoints - Number(team.points)}
+                  extra={team.wins}
+                  to={withSeason(`/constructors/${team.constructorId}`)}
+                />
+              ))}
+            </StandingsList>
+          )}
+        </Card>
+
+        <section aria-labelledby="teams-heading">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 id="teams-heading" className="font-display text-2xl uppercase text-ink">
+              {t("constructors.teams.title")}
+            </h2>
+            <label className="relative w-full sm:w-72">
+              <span className="sr-only">{t("constructors.teams.search")}</span>
+              <LuSearch
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+                aria-hidden
               />
-            ))}
-          </StandingsList>
-        )}
-      </Card>
-
-      <section aria-labelledby="teams-heading">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 id="teams-heading" className="font-display text-2xl uppercase text-ink">
-            Teams
-          </h2>
-          <label className="relative w-full sm:w-72">
-            <span className="sr-only">Search teams</span>
-            <LuSearch
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-              aria-hidden
-            />
-            <input
-              type="search"
-              placeholder="Search team or nationality"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-10 w-full rounded-panel border border-line-strong bg-surface-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-3 hover:border-ink-3"
-            />
-          </label>
-        </div>
-
-        {isPending ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="h-44" />
-            ))}
+              <input
+                type="search"
+                placeholder={t("constructors.teams.placeholder")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-10 w-full rounded-panel border border-line-strong bg-surface-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-3 hover:border-ink-3"
+              />
+            </label>
           </div>
-        ) : filtered.length === 0 ? (
-          <ErrorState tone="empty" title="No teams match" message={`Nothing matches “${search}”.`} />
-        ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((t) => (
-              <TeamCard
-                key={t.constructorId}
-                team={t}
-                profileTo={withSeason(`/constructors/${t.constructorId}`)}
-                driversTo={withSeason("/drivers", { team: t.constructorId })}
-              />
-            ))}
-          </ul>
-        )}
-      </section>
+
+          {isPending ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} className="h-44" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <ErrorState
+              tone="empty"
+              title={t("constructors.teams.noMatch")}
+              message={t("constructors.teams.nothingMatches", { query: search })}
+            />
+          ) : (
+            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((team) => (
+                <TeamCard
+                  key={team.constructorId}
+                  team={team}
+                  profileTo={withSeason(`/constructors/${team.constructorId}`)}
+                  driversTo={withSeason("/drivers", { team: team.constructorId })}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </>
   );
 }

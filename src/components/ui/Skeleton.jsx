@@ -1,12 +1,15 @@
+import { useT } from "../../i18n/LanguageContext";
+
 // Loading placeholder block. Pulse is disabled for reduced-motion users.
 export function Skeleton({ className = "" }) {
   return <div aria-hidden className={`rounded-panel bg-surface-3 motion-safe:animate-pulse ${className}`} />;
 }
 
 // N placeholder rows shaped like StandingsRow.
-export function SkeletonRows({ rows = 6, label = "Loading" }) {
+export function SkeletonRows({ rows = 6, label }) {
+  const t = useT();
   return (
-    <div role="status" aria-label={label} className="divide-y divide-line">
+    <div role="status" aria-label={label ?? t("common.loading")} className="divide-y divide-line">
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4">
           <Skeleton className="h-6 w-7" />

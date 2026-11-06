@@ -39,6 +39,9 @@ const ISO = {
   "United States": "US",
 };
 
+// ISO code for a Jolpica country name (undefined when unknown).
+export const countryCode = (country) => ISO[country];
+
 // Flag emoji for a country name, or "" when unknown. Decorative: always show the name too.
 export const countryFlag = (country) => {
   const code = ISO[country];

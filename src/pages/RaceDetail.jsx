@@ -10,18 +10,13 @@ import {
   SkeletonRows,
   StatGrid,
   TeamStripe,
+  ZoneLabel,
+  useZone,
 } from "../components/ui";
+import { useI18n } from "../i18n/LanguageContext";
+import { useDataLabels } from "../i18n/data";
 
-const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
-const formatDate = (iso) =>
-  iso
-    ? new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : null;
+const DATE_OPTS = { weekday: "short", day: "numeric", month: "long", year: "numeric" };
 
 // "1:32.064" / "59.871" -> seconds, for finding the fastest time of a session.
 const lapSeconds = (t) => t.split(":").reduce((acc, part) => acc * 60 + Number(part), 0);
@@ -33,17 +28,19 @@ const head = "label-caps px-2 pb-2 sm:px-4";
 const inSeason = (path, season) => `${path}?season=${season}`;
 
 function BackLink({ season }) {
+  const { t } = useI18n();
   return (
     <Link
       to={inSeason("/races", season)}
       className="mb-4 -ml-2 inline-flex h-10 items-center gap-2 rounded-panel px-2 text-sm font-medium text-ink-2 hover:bg-surface-3 hover:text-ink transition-colors duration-150"
     >
-      <LuArrowLeft className="size-4" aria-hidden /> Races
+      <LuArrowLeft className="size-4" aria-hidden /> {t("races.title")}
     </Link>
   );
 }
 
 function DriverCell({ result, season, fastest }) {
+  const { t } = useI18n();
   const d = result.Driver;
   const c = result.Constructor;
   return (
@@ -68,7 +65,7 @@ function DriverCell({ result, season, fastest }) {
           )}
           {fastest && (
             <span className="inline-flex items-center gap-0.5 font-semibold text-best">
-              <LuTimer className="size-3" aria-hidden /> Fastest lap
+              <LuTimer className="size-3" aria-hidden /> {t("races.race.fastestLap")}
             </span>
           )}
         </span>
@@ -79,20 +76,21 @@ function DriverCell({ result, season, fastest }) {
 
 // Classification table for the race or the sprint.
 function ResultsTable({ results, season }) {
+  const { t, fmt } = useI18n();
   return (
     <div className="relative overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-line text-left">
-            <th scope="col" className={`${head} w-14 text-right`}>Pos</th>
-            <th scope="col" className={head}>Driver</th>
-            <th scope="col" className={`${head} hidden text-right sm:table-cell`}>Grid</th>
-            <th scope="col" className={`${head} text-right`} title="Places gained (▲) or lost (▼) from grid to finish">
-              Places
+            <th scope="col" className={`${head} w-14 text-right`}>{t("common.pos")}</th>
+            <th scope="col" className={head}>{t("races.race.driver")}</th>
+            <th scope="col" className={`${head} hidden text-right sm:table-cell`}>{t("races.race.grid")}</th>
+            <th scope="col" className={`${head} text-right`} title={t("common.places.hint")}>
+              {t("races.race.places")}
             </th>
-            <th scope="col" className={`${head} hidden text-right md:table-cell`}>Laps</th>
-            <th scope="col" className={`${head} hidden text-right sm:table-cell`}>Time / status</th>
-            <th scope="col" className={`${head} text-right`}>Pts</th>
+            <th scope="col" className={`${head} hidden text-right md:table-cell`}>{t("races.race.laps")}</th>
+            <th scope="col" className={`${head} hidden text-right sm:table-cell`}>{t("races.race.timeStatus")}</th>
+            <th scope="col" className={`${head} text-right`}>{t("races.race.pts")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -105,7 +103,7 @@ function ResultsTable({ results, season }) {
                 <DriverCell result={r} season={season} fastest={r.FastestLap?.rank === "1"} />
               </td>
               <td className={`${cell} hidden text-right text-ink-2 sm:table-cell`}>
-                {Number(r.grid) ? r.grid : "PL"}
+                {Number(r.grid) ? r.grid : <abbr title={t("races.race.pitLane")}>{t("races.race.pitLaneShort")}</abbr>}
               </td>
               <td className={`${cell} text-right`}>
                 <PlacesCell result={r} />
@@ -114,7 +112,7 @@ function ResultsTable({ results, season }) {
               <td className={`${cell} hidden whitespace-nowrap text-right sm:table-cell`}>
                 {r.Time?.time ? <span className="text-ink">{r.Time.time}</span> : <span className="text-ink-2">{r.status}</span>}
               </td>
-              <td className={`${cell} text-right font-semibold text-ink`}>{formatPoints(r.points)}</td>
+              <td className={`${cell} text-right font-semibold text-ink`}>{fmt.points(r.points)}</td>
             </tr>
           ))}
         </tbody>
@@ -124,6 +122,7 @@ function ResultsTable({ results, season }) {
 }
 
 function QualifyingTable({ results, season }) {
+  const { t } = useI18n();
   // Older seasons have no Q2/Q3 split; only show the columns that have data.
   const sessions = ["Q1", "Q2", "Q3"].filter((q) => results.some((r) => r[q]));
   const best = Object.fromEntries(
@@ -137,8 +136,8 @@ function QualifyingTable({ results, season }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-line text-left">
-            <th scope="col" className={`${head} w-14 text-right`}>Pos</th>
-            <th scope="col" className={head}>Driver</th>
+            <th scope="col" className={`${head} w-14 text-right`}>{t("common.pos")}</th>
+            <th scope="col" className={head}>{t("races.race.driver")}</th>
             {sessions.map((q) => (
               <th key={q} scope="col" className={`${head} text-right`}>
                 {q}
@@ -163,7 +162,7 @@ function QualifyingTable({ results, season }) {
                   }`}
                 >
                   {r[q] || "–"}
-                  {r[q] && r[q] === best[q] && <span className="sr-only"> (fastest)</span>}
+                  {r[q] && r[q] === best[q] && <span className="sr-only"> ({t("races.race.fastest")})</span>}
                 </td>
               ))}
             </tr>
@@ -196,6 +195,9 @@ function Highlight({ label, result, value }) {
 }
 
 function RaceDetail() {
+  const { t, fmt } = useI18n();
+  const { country } = useDataLabels();
+  const zone = useZone();
   const params = useParams();
   // Malformed ids never reach the API; they fall through to "not found".
   const valid = /^\d{4}$/.test(params.season) && /^\d{1,2}$/.test(params.round);
@@ -212,7 +214,7 @@ function RaceDetail() {
             <Skeleton key={i} className="h-24" />
           ))}
         </StatGrid>
-        <SkeletonRows rows={10} label="Loading race" />
+        <SkeletonRows rows={10} label={t("races.race.loading")} />
       </>
     );
   }
@@ -225,9 +227,9 @@ function RaceDetail() {
           <ErrorState onRetry={refetch} />
         ) : (
           <ErrorState
-            title="Race not found"
+            title={t("races.race.notFound")}
             titleAs="h1"
-            message={`There's no round ${round} in the ${season} season. Pick a race from the calendar.`}
+            message={t("races.race.notFoundMessage", { round, season })}
           />
         )}
       </>
@@ -239,6 +241,7 @@ function RaceDetail() {
   const pole = qualifying.find((r) => r.position === "1") ?? results.find((r) => r.grid === "1");
   const fastest = results.find((r) => r.FastestLap?.rank === "1");
   const loc = race.Circuit.Location;
+  const start = race.time ? new Date(`${race.date}T${race.time}`) : null;
 
   return (
     <>
@@ -246,12 +249,21 @@ function RaceDetail() {
       <header className="mb-6 lg:mb-8">
         <h1 className="font-display text-4xl uppercase text-ink text-balance sm:text-5xl">{race.raceName}</h1>
         <p className="mt-2 text-sm text-ink-2">
-          {race.season} season · Round {race.round}
-          {sprint.length > 0 && " · Sprint weekend"}
+          {t("common.season.title", { season: race.season })} · {t("races.round", { round: race.round })}
+          {sprint.length > 0 && ` · ${t("races.race.sprintWeekend")}`}
         </p>
         <p className="text-sm text-ink-2">
-          {race.Circuit.circuitName} · {loc.locality}, {loc.country} · {formatDate(race.date)}
+          {race.Circuit.circuitName} · {loc.locality}, {country(loc.country)} ·{" "}
+          {/* With a start time: local date + time, the zone named next to it, UTC in the tooltip. */}
+          {start ? (
+            <time dateTime={start.toISOString()} title={zone.utc(start)} className="whitespace-nowrap">
+              {fmt.date(start, { ...DATE_OPTS, hour: "2-digit", minute: "2-digit" })}
+            </time>
+          ) : (
+            <time dateTime={race.date}>{fmt.day(race.date, DATE_OPTS)}</time>
+          )}
         </p>
+        {start && <ZoneLabel at={start} className="mt-1 flex w-fit" />}
         {race.url && (
           <a
             href={race.url}
@@ -259,24 +271,24 @@ function RaceDetail() {
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong hover:decoration-ink"
           >
-            Race on Wikipedia <LuExternalLink className="size-3.5" aria-hidden />
-            <span className="sr-only">(opens in a new tab)</span>
+            {t("races.race.wikipedia")} <LuExternalLink className="size-3.5" aria-hidden />
+            <span className="sr-only">{t("common.wiki.newTab")}</span>
           </a>
         )}
       </header>
 
       {results.length > 0 && (
-        <section aria-label="Race highlights" className="mb-8">
+        <section aria-label={t("races.race.highlights")} className="mb-8">
           <StatGrid className="grid-cols-2 lg:grid-cols-4">
-            <Highlight label="Winner" result={winner} value={winner?.Time?.time ?? winner?.Constructor?.name} />
-            <Highlight label="Pole position" result={pole} value={pole?.Q3 ?? pole?.Q2 ?? pole?.Q1 ?? pole?.Constructor?.name} />
+            <Highlight label={t("races.winner")} result={winner} value={winner?.Time?.time ?? winner?.Constructor?.name} />
+            <Highlight label={t("races.race.pole")} result={pole} value={pole?.Q3 ?? pole?.Q2 ?? pole?.Q1 ?? pole?.Constructor?.name} />
             <Highlight
-              label="Fastest lap"
+              label={t("races.race.fastestLap")}
               result={fastest}
-              value={fastest && `${fastest.FastestLap.Time?.time ?? ""} · lap ${fastest.FastestLap.lap}`}
+              value={fastest && `${fastest.FastestLap.Time?.time ?? ""} · ${t("races.race.lapN", { lap: fastest.FastestLap.lap })}`}
             />
             <div className="flex flex-col gap-2 rounded-panel border border-line bg-surface-2 p-4 shadow-raised">
-              <dt className="label-caps">Laps</dt>
+              <dt className="label-caps">{t("races.race.laps")}</dt>
               <dd className="font-display text-4xl text-ink">{winner?.laps ?? "—"}</dd>
             </div>
           </StatGrid>
@@ -284,26 +296,24 @@ function RaceDetail() {
       )}
 
       <div className="space-y-8">
-        <Card title="Race result" bodyClassName="py-3">
+        <Card title={t("races.race.result")} bodyClassName="py-3">
           {results.length > 0 ? (
             <ResultsTable results={results} season={season} />
           ) : (
             <p className="px-4 py-6 text-sm text-ink-2">
-              {new Date(`${race.date}T23:59:59`) > new Date()
-                ? "This race hasn't run yet. Results appear here after the chequered flag."
-                : "No results recorded for this race."}
+              {t(new Date(`${race.date}T23:59:59`) > new Date() ? "races.race.notRun" : "races.race.noResults")}
             </p>
           )}
         </Card>
 
         {sprint.length > 0 && (
-          <Card title="Sprint result" bodyClassName="py-3">
+          <Card title={t("races.race.sprintResult")} bodyClassName="py-3">
             <ResultsTable results={sprint} season={season} />
           </Card>
         )}
 
         {qualifying.length > 0 && (
-          <Card title="Qualifying" bodyClassName="py-3">
+          <Card title={t("races.race.qualifying")} bodyClassName="py-3">
             <QualifyingTable results={qualifying} season={season} />
           </Card>
         )}

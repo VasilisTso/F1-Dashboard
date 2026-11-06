@@ -251,11 +251,40 @@ export const getConstructorSeasonPoints = async (constructorId, seasons, onProgr
 
 // ---- Wikipedia -------------------------------------------------------------
 
+const wikiSummary = async (lang, title) =>
+  (await axios.get(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`)).data;
+
+// The article's title in another language via langlinks (follows redirects), or null if there is none.
+const wikiLanglink = async (fromLang, title, toLang) => {
+  const res = await axios.get(`https://${fromLang}.wikipedia.org/w/api.php`, {
+    params: { action: "query", prop: "langlinks", lllang: toLang, titles: title, redirects: 1, format: "json", origin: "*" },
+  });
+  const page = Object.values(res.data?.query?.pages ?? {})[0];
+  return page?.langlinks?.[0]?.["*"] ?? null;
+};
+
 // Intro text + thumbnail from the Wikipedia URL Jolpica returns for drivers/constructors.
-export const getWikiSummary = async (wikiUrl) => {
+// With `lang` other than the URL's (e.g. "el"), the matching article is used when one exists,
+// else the original. The result's `lang` says which one was shown.
+export const getWikiSummary = async (wikiUrl, lang = "en") => {
   const match = wikiUrl?.match(/^https?:\/\/(\w+)\.wikipedia\.org\/wiki\/(.+)$/);
   if (!match) return null;
-  const [, lang, title] = match;
-  const res = await axios.get(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${title}`);
-  return res.data;
+  const [, srcLang, rawTitle] = match;
+  let title = rawTitle;
+  try {
+    title = decodeURIComponent(rawTitle);
+  } catch {
+    // Malformed escape (e.g. a literal "%"): use the raw title as the old code did.
+  }
+  title = title.replace(/_/g, " ");
+  if (lang !== srcLang) {
+    try {
+      const translated = await wikiLanglink(srcLang, title, lang);
+      if (translated) return { ...(await wikiSummary(lang, translated)), lang, requested: lang };
+    } catch {
+      // Lookup failed: fall back to the source-language article below.
+    }
+  }
+  // `requested` lets the UI tell a real fallback from the previous language's placeholder data.
+  return { ...(await wikiSummary(srcLang, title)), lang: srcLang, requested: lang };
 };

@@ -7,3 +7,4 @@ export { StandingsRow, StandingsList } from "./StandingsRow";
 export { StatTile, StatGrid } from "./StatTile";
 export { Countdown } from "./Countdown";
 export { FinishCell, PlacesCell } from "./ResultCells";
+export { ZoneLabel, useZone } from "./ZoneLabel";

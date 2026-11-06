@@ -6,16 +6,19 @@ A Formula 1 fan dashboard for any season, styled like a broadcast timing tower: 
 
 ## Features
 
-- **Overview:** live countdown to the next race with the weekend schedule in your local time, last-race podium, and top-5 drivers and constructors with gap-to-leader bars.
+- **Overview:** live countdown to the next race with the weekend schedule in your time zone, last-race podium, and top-5 drivers and constructors with gap-to-leader bars.
 - **Drivers:** timing-tower standings plus the grid grouped by team, with search and a team filter (`?team=`).
 - **Driver profiles** (`/drivers/:id`): career stats (seasons, starts, wins, podiums, poles, teams), Wikipedia bio and photo, all-time teams, and a race-by-race results table for the selected season.
 - **Constructors:** standings and team cards linking to each team's profile.
 - **Constructor profiles** (`/constructors/:id`): career stats, Wikipedia intro and logo, current season and drivers, and a points-per-season chart with championship seasons highlighted. The last 15 seasons load first; full history loads on request through a throttled queue and is cached locally.
 - **Races:** calendar strip with finished / next / upcoming status, race cards with winner and expandable full result.
 - **Race pages** (`/races/:season/:round`): race result, sprint result and qualifying (Q1–Q3), with winner, pole, fastest lap and laps.
-- **Season selector:** every page works for any season from 1950 on, kept in the URL (`?season=2021`).
+- **Season picker:** pick a decade, then a year; every page works for any season from 1950 on, kept in the URL (`?season=2021`). Fully keyboard operable.
+- **English and Greek:** the whole interface, numbers and dates switch language; Wikipedia intros load the Greek article when there is one and fall back to English.
+- **Time zones made explicit:** session and race times are in your device's time zone, named once per block ("Times in Athens · GMT+2"), with UTC on hover.
+- **Wide-screen layouts:** above 1680px the list pages spread into extra columns instead of leaving empty margins.
 - **Dark and light themes**, responsive down to phone width with a drawer menu.
-- **Motion with purpose:** standings rows wipe in like a broadcast graphic, gap bars fill, podium steps rise, the active nav block slides, filtered cards glide into place. All of it respects `prefers-reduced-motion`.
+- **Motion with purpose:** standings rows wipe in like a broadcast graphic, gap bars fill, podium steps rise, the active nav block slides, the mobile drawer slides in, filtered cards glide into place. All of it respects `prefers-reduced-motion`.
 - **Accessible:** keyboard navigable, visible focus, WCAG 2.2 AA contrast in both themes, team colors always paired with names.
 
 ## Tech Stack
@@ -54,6 +57,10 @@ No API keys or environment variables are needed.
 | Constructors | Races |
 | --- | --- |
 | ![Constructors](screenshots/constructors.png) | ![Races](screenshots/races.png) |
+
+| Greek interface | Wide screen (1920px) |
+| --- | --- |
+| ![Overview in Greek](screenshots/overview-el.png) | ![Drivers on a wide screen](screenshots/drivers-wide.png) |
 
 ### Mobile
 

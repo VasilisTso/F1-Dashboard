@@ -1,7 +1,6 @@
 import { useReducedMotion } from "motion/react";
 import { Bar, BarChart, CartesianGrid, Cell, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-
-const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
+import { useI18n } from "../i18n/LanguageContext";
 
 // 4px rounded data-end, clamped so narrow bars (long histories on phones) don't distort.
 const RoundedBar = (props) => {
@@ -10,6 +9,7 @@ const RoundedBar = (props) => {
 };
 
 function ChartTooltip({ active, payload }) {
+  const { t, fmt } = useI18n();
   const row = active && payload?.[0]?.payload;
   if (!row) return null;
   const champion = isTitle(row);
@@ -17,13 +17,13 @@ function ChartTooltip({ active, payload }) {
     <div className="rounded-panel border border-line-strong bg-surface-2 px-3 py-2 text-sm shadow-raised">
       <p className="font-display text-lg text-ink">{row.season}</p>
       <p className="text-ink">
-        {formatPoints(row.points)} <span className="text-ink-3">pts</span>
+        {fmt.points(row.points)} <span className="text-ink-3">{t("common.pts")}</span>
       </p>
       <p className="text-ink-2">
-        P{row.position} · {row.wins} {row.wins === 1 ? "win" : "wins"}
+        P{row.position} · {t("common.winCount", { count: row.wins, n: fmt.number(row.wins) })}
       </p>
-      {champion && <p className="font-semibold uppercase text-best">Champions</p>}
-      {row.inProgress && <p className="text-ink-3">Season in progress</p>}
+      {champion && <p className="font-semibold uppercase text-best">{t("constructors.chart.champions")}</p>}
+      {row.inProgress && <p className="text-ink-3">{t("constructors.chart.inProgress")}</p>}
     </div>
   );
 }
@@ -37,29 +37,33 @@ function ChartTooltip({ active, payload }) {
 export const isTitle = (row) => row.position === 1 && !row.inProgress;
 
 export function SeasonPointsChart({ rows, teamName, chart = true, animate = true }) {
+  const { t, fmt } = useI18n();
   const reduceMotion = useReducedMotion();
   const titles = rows.filter(isTitle).map((r) => r.season);
   const best = rows.reduce((a, r) => (r.points > (a?.points ?? -1) ? r : a), null);
-  const summary =
-    `${teamName} points per season, ${rows[0].season} to ${rows.at(-1).season}. ` +
-    `Best: ${formatPoints(best.points)} points in ${best.season}. ` +
-    (titles.length ? `Championships: ${titles.join(", ")}.` : "No championships in this range.");
+  const summary = [
+    t("constructors.chart.summary", { team: teamName, from: rows[0].season, to: rows.at(-1).season }),
+    t("constructors.chart.best", { points: fmt.points(best.points), season: best.season }),
+    titles.length
+      ? t("constructors.chart.championships", { list: titles.join(", ") })
+      : t("constructors.chart.noChampionships"),
+  ].join(" ");
 
   const table = (
     <table className="w-full text-sm">
       <thead className="sticky top-0 bg-surface-2">
         <tr className="text-left">
           <th scope="col" className="label-caps px-4 py-2">
-            Season
+            {t("common.season.label")}
           </th>
           <th scope="col" className="label-caps px-4 py-2 text-right">
-            Pos
+            {t("common.pos")}
           </th>
           <th scope="col" className="label-caps px-4 py-2 text-right">
-            Points
+            {t("common.points")}
           </th>
           <th scope="col" className="label-caps px-4 py-2 text-right">
-            Wins
+            {t("common.wins")}
           </th>
         </tr>
       </thead>
@@ -72,7 +76,7 @@ export function SeasonPointsChart({ rows, teamName, chart = true, animate = true
             <td className={`px-4 py-2 text-right ${isTitle(r) ? "font-semibold text-best" : "text-ink-2"}`}>
               P{r.position}
             </td>
-            <td className="px-4 py-2 text-right text-ink">{formatPoints(r.points)}</td>
+            <td className="px-4 py-2 text-right text-ink">{fmt.points(r.points)}</td>
             <td className="px-4 py-2 text-right text-ink-2">{r.wins}</td>
           </tr>
         ))}
@@ -97,7 +101,7 @@ export function SeasonPointsChart({ rows, teamName, chart = true, animate = true
           >
             <CartesianGrid vertical={false} />
             <XAxis dataKey="season" tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={16} />
-            <YAxis tickLine={false} axisLine={false} allowDecimals={false} tickFormatter={formatPoints} width={48} />
+            <YAxis tickLine={false} axisLine={false} allowDecimals={false} tickFormatter={(v) => fmt.points(v)} width={48} />
             <Tooltip content={<ChartTooltip />} isAnimationActive={false} />
             <Bar
               dataKey="points"
@@ -117,16 +121,16 @@ export function SeasonPointsChart({ rows, teamName, chart = true, animate = true
       {titles.length > 0 && (
         <figcaption className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2">
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="size-2.5 rounded-sm bg-best" /> Championship season
+            <span aria-hidden className="size-2.5 rounded-sm bg-best" /> {t("constructors.chart.titleSeason")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="size-2.5 rounded-sm bg-ink-3" /> Other seasons
+            <span aria-hidden className="size-2.5 rounded-sm bg-ink-3" /> {t("constructors.chart.otherSeasons")}
           </span>
         </figcaption>
       )}
       <details className="mt-4 border-t border-line">
         <summary className="cursor-pointer py-2.5 text-sm font-medium text-ink-2 hover:text-ink">
-          Show as table
+          {t("constructors.chart.showTable")}
         </summary>
         <div className="max-h-80 overflow-auto border-t border-line">{table}</div>
       </details>

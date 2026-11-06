@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { animate, useReducedMotion } from "motion/react";
 import { Skeleton } from "./Skeleton";
+import { useI18n } from "../../i18n/LanguageContext";
 
 // Counts up from 0 on first render (skipped for reduced motion / non-numbers).
 function CountUp({ value }) {
+  const { fmt } = useI18n();
   const reduce = useReducedMotion();
   const target = Number(value);
   const numeric = Number.isFinite(target);
@@ -28,7 +30,7 @@ function CountUp({ value }) {
 
   if (!numeric) return value;
   const decimals = Number.isInteger(target) ? 0 : 1;
-  return Number(shown).toLocaleString("en", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  return fmt.number(shown, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
 // Key figure with a label. `value` may be a number (counts up) or any node; `hint` sits underneath.

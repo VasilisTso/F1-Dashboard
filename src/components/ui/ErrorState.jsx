@@ -1,15 +1,20 @@
 import { LuTriangleAlert, LuRotateCw } from "react-icons/lu";
+import { useT } from "../../i18n/LanguageContext";
 
 // Inline error / empty message. Pass `onRetry` to show a retry button (e.g. query.refetch).
 // `titleAs="h1"` when the state replaces a whole page (not found), so the page keeps a heading.
 export function ErrorState({
-  title = "Couldn't load data",
-  message = "The F1 data service didn't respond. It may be rate limiting requests; try again in a moment.",
+  title,
+  message,
   onRetry,
   tone = "error",
   className = "",
   titleAs = "p",
 }) {
+  const t = useT();
+  // Defaults describe the usual failure (Jolpica rate limiting). Pass `message={null}` for none.
+  title ??= t("common.error.title");
+  if (message === undefined) message = t("common.error.message");
   const isError = tone === "error";
   const Title = titleAs;
   return (
@@ -29,7 +34,7 @@ export function ErrorState({
           className="inline-flex h-10 items-center gap-2 rounded-panel border border-line-strong px-4 text-sm font-medium text-ink hover:bg-surface-3 transition-colors duration-150"
         >
           <LuRotateCw className="size-4" aria-hidden />
-          Try again
+          {t("common.error.retry")}
         </button>
       )}
     </div>
