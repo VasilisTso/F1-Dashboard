@@ -9,6 +9,7 @@ import Constructors from "./pages/Constructors";
 import Races from "./pages/Races";
 import ConstructorDetail from "./pages/ConstructorDetail";
 import DriverDetail from "./pages/DriverDetail";
+import RaceDetail from "./pages/RaceDetail";
 
 function App() {
   const [navOpen, setNavOpen] = useState(false);
@@ -31,6 +32,7 @@ function App() {
               <Route path="/constructors" element={<Constructors />} />
               <Route path="/constructors/:constructorId" element={<ConstructorDetail />} />
               <Route path="/races" element={<Races />} />
+              <Route path="/races/:season/:round" element={<RaceDetail />} />
               <Route
                 path="*"
                 element={<ErrorState title="Page not found" message="That page doesn't exist. Pick a section from the menu." />}

@@ -113,6 +113,25 @@ export const useDriverSeasonResults = (driverId) => {
   });
 };
 
+export const useDriverSeasonSprints = (driverId) => {
+  const { season } = useSeason();
+  return useQuery({
+    queryKey: ["driverSeasonSprints", driverId, season],
+    queryFn: () => api.getDriverSeasonSprints(driverId, season),
+    enabled: !!driverId,
+    ...staleFor(season),
+  });
+};
+
+// Season and round come from the race URL, not the season selector.
+export const useRace = (season, round) =>
+  useQuery({
+    queryKey: ["race", season, round],
+    queryFn: () => api.getRace(season, round),
+    enabled: !!season && !!round,
+    ...(Number(season) < new Date().getFullYear() ? HISTORY : LIVE),
+  });
+
 export const useConstructor = (constructorId) =>
   useQuery({
     queryKey: ["constructor", constructorId],

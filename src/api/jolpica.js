@@ -77,6 +77,29 @@ export const getSeasonResults = async (season = "current") => {
 // seasons and has gaps (Senna: 3 vs 65 real), while grid data is complete. Grid penalties
 // can shift a pole by a race or two, which is close enough for a career total.
 
+// One race weekend: race info plus `results`, `sprint` and `qualifying` arrays (empty until run).
+// Returns null for a round that doesn't exist.
+export const getRace = async (season, round) => {
+  const [results, sprint, qualifying] = await Promise.all([
+    get(`/${season}/${round}/results.json`, { limit: PAGE_LIMIT }),
+    get(`/${season}/${round}/sprint.json`, { limit: PAGE_LIMIT }),
+    get(`/${season}/${round}/qualifying.json`, { limit: PAGE_LIMIT }),
+  ]);
+  const race =
+    results.RaceTable.Races[0] ??
+    sprint.RaceTable.Races[0] ??
+    qualifying.RaceTable.Races[0] ??
+    (await get(`/${season}/${round}.json`)).RaceTable.Races[0];
+  if (!race) return null;
+  const { Results, SprintResults, QualifyingResults, ...info } = race;
+  return {
+    ...info,
+    results: results.RaceTable.Races[0]?.Results ?? [],
+    sprint: sprint.RaceTable.Races[0]?.SprintResults ?? [],
+    qualifying: qualifying.RaceTable.Races[0]?.QualifyingResults ?? [],
+  };
+};
+
 // ---- Drivers ---------------------------------------------------------------
 
 export const getDrivers = async (season = "current") =>
@@ -115,6 +138,15 @@ export const getDriverConstructors = async (driverId) =>
 export const getDriverSeasonResults = async (driverId, season = "current") =>
   (await get(`/${season}/drivers/${driverId}/results.json`, { limit: PAGE_LIMIT })).RaceTable.Races.map(
     ({ Results, ...race }) => ({ ...race, result: Results[0] })
+  );
+
+// A driver's sprint results in a season as { [round]: SprintResult }.
+export const getDriverSeasonSprints = async (driverId, season = "current") =>
+  Object.fromEntries(
+    (await get(`/${season}/drivers/${driverId}/sprint.json`, { limit: PAGE_LIMIT })).RaceTable.Races.map((r) => [
+      r.round,
+      r.SprintResults[0],
+    ])
   );
 
 // ---- Constructors ----------------------------------------------------------

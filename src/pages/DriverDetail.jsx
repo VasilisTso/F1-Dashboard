@@ -5,11 +5,22 @@ import {
   useDriverCareer,
   useDriverConstructors,
   useDriverSeasonResults,
+  useDriverSeasonSprints,
   useDriverStandings,
   useWikiSummary,
 } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
-import { Card, ErrorState, Skeleton, SkeletonRows, StatGrid, StatTile, TeamStripe } from "../components/ui";
+import {
+  Card,
+  ErrorState,
+  FinishCell,
+  PlacesCell,
+  Skeleton,
+  SkeletonRows,
+  StatGrid,
+  StatTile,
+  TeamStripe,
+} from "../components/ui";
 
 const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
 const formatDate = (iso, opts = { day: "numeric", month: "short", year: "numeric" }) =>
@@ -24,9 +35,6 @@ const ageOn = (dob) => {
     now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
   return beforeBirthday ? age - 1 : age;
 };
-
-// Ergast positionText codes for unclassified results.
-const OUTCOME = { R: "DNF", D: "DSQ", E: "EXC", W: "WD", F: "DNQ", N: "NC" };
 
 function BackLink() {
   const { withSeason } = useSeason();
@@ -207,33 +215,23 @@ function Teams({ teamsQ }) {
   );
 }
 
-// Finish cell: classified position, or the unclassified code (DNF, DSQ…).
-function Finish({ result }) {
-  const outcome = OUTCOME[result.positionText];
-  if (outcome) return <span className="font-semibold text-ink-3">{outcome}</span>;
-  const pos = Number(result.position);
-  return <span className={`font-display text-xl ${pos === 1 ? "text-best" : "text-ink"}`}>P{pos}</span>;
-}
-
-// Places gained (+) or lost (−) from grid to flag; pit-lane starts (grid 0) have no reference.
-function Delta({ result }) {
-  const grid = Number(result.grid);
-  if (!grid || OUTCOME[result.positionText]) return null;
-  const d = grid - Number(result.position);
-  if (d === 0) return <span className="text-ink-3">=</span>;
-  return d > 0 ? (
-    <span className="text-gain">
-      <span className="sr-only">gained </span>+{d}
-    </span>
-  ) : (
-    <span className="text-ink-3">
-      <span className="sr-only">lost </span>−{-d}
-    </span>
-  );
-}
+const cell = "px-2 py-2 sm:px-4";
+const head = "label-caps px-2 pb-2 sm:px-4";
 
 function SeasonResults({ driverId, label }) {
   const { data: races, isPending, error, refetch } = useDriverSeasonResults(driverId);
+  const sprintsQ = useDriverSeasonSprints(driverId);
+  const sprints = sprintsQ.data ?? {};
+
+  // Running championship total after each round (race + sprint), as the standings count it.
+  let total = 0;
+  const rows = (races ?? []).map((race) => {
+    const sprint = sprints[race.round];
+    const sprintPoints = Number(sprint?.points ?? 0);
+    total += Number(race.result.points) + sprintPoints;
+    return { race, sprintPoints, total };
+  });
+
   return (
     <Card title={label ? `${label} race results` : "Race results"} bodyClassName="py-3">
       {isPending ? (
@@ -245,43 +243,64 @@ function SeasonResults({ driverId, label }) {
       ) : races.length === 0 ? (
         <p className="px-4 py-6 text-sm text-ink-2">No race results for this driver in the selected season.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line text-left">
-                <th scope="col" className="label-caps w-12 px-3 pb-2 text-right sm:px-4">Rd</th>
-                <th scope="col" className="label-caps px-3 pb-2 sm:px-4">Grand Prix</th>
-                <th scope="col" className="label-caps hidden px-3 pb-2 text-right sm:table-cell sm:px-4">Grid</th>
-                <th scope="col" className="label-caps px-3 pb-2 text-right sm:px-4">Finish</th>
-                <th scope="col" className="label-caps hidden w-12 whitespace-nowrap px-3 pb-2 text-right sm:table-cell sm:px-4">+/−</th>
-                <th scope="col" className="label-caps px-3 pb-2 text-right sm:px-4">Pts</th>
-                <th scope="col" className="label-caps hidden px-3 pb-2 md:table-cell md:px-4">Status</th>
+                <th scope="col" className={`${head} hidden w-12 text-right sm:table-cell`}>Rd</th>
+                <th scope="col" className={head}>Grand Prix</th>
+                <th scope="col" className={`${head} hidden text-right sm:table-cell`}>Grid</th>
+                <th scope="col" className={`${head} text-right`}>Finish</th>
+                <th scope="col" className={`${head} text-right`} title="Places gained (▲) or lost (▼) from grid to finish">
+                  Places
+                </th>
+                <th scope="col" className={`${head} text-right`} title="Points scored that weekend (race + sprint)">
+                  Pts
+                </th>
+                <th scope="col" className={`${head} text-right`} title="Championship points after this round">
+                  Total
+                </th>
+                <th scope="col" className={`${head} hidden md:table-cell`}>Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {races.map((race) => {
+              {rows.map(({ race, sprintPoints, total }) => {
                 const r = race.result;
                 return (
                   <tr key={race.round}>
-                    <td className="font-display px-3 py-2 text-right text-lg text-ink-3 sm:px-4">{race.round}</td>
-                    <td className="px-3 py-2 sm:px-4">
-                      <span className="block font-semibold text-ink">{race.raceName.replace(/ Grand Prix$/, " GP")}</span>
+                    <td className={`${cell} font-display hidden text-right text-lg text-ink-3 sm:table-cell`}>
+                      {race.round}
+                    </td>
+                    <td className={cell}>
+                      <Link
+                        to={`/races/${race.season}/${race.round}`}
+                        className="block font-semibold text-ink underline decoration-transparent underline-offset-2 hover:decoration-ink transition-colors duration-150"
+                      >
+                        {race.raceName.replace(/ Grand Prix$/, " GP")}
+                      </Link>
                       <span className="block text-xs text-ink-2">
+                        <span className="sm:hidden">R{race.round} · </span>
                         {formatDate(race.date, { day: "numeric", month: "short" })}
-                        {r.Constructor && ` · ${r.Constructor.name}`}
+                        {r.Constructor && <span className="hidden sm:inline"> · {r.Constructor.name}</span>}
                       </span>
                     </td>
-                    <td className="hidden px-3 py-2 text-right text-ink-2 sm:table-cell sm:px-4">
+                    <td className={`${cell} hidden text-right text-ink-2 sm:table-cell`}>
                       {Number(r.grid) ? r.grid : "PL"}
                     </td>
-                    <td className="px-3 py-2 text-right sm:px-4">
-                      <Finish result={r} />
+                    <td className={`${cell} text-right`}>
+                      <FinishCell result={r} />
                     </td>
-                    <td className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
-                      <Delta result={r} />
+                    <td className={`${cell} text-right`}>
+                      <PlacesCell result={r} />
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold text-ink sm:px-4">{formatPoints(r.points)}</td>
-                    <td className="hidden px-3 py-2 text-ink-2 md:table-cell md:px-4">{r.status}</td>
+                    <td className={`${cell} text-right`}>
+                      <span className="block font-semibold text-ink">{formatPoints(Number(r.points) + sprintPoints)}</span>
+                      {sprintPoints > 0 && (
+                        <span className="block whitespace-nowrap text-xs text-ink-2">{formatPoints(sprintPoints)} sprint</span>
+                      )}
+                    </td>
+                    <td className={`${cell} font-display text-right text-lg text-ink`}>{formatPoints(total)}</td>
+                    <td className={`${cell} hidden text-ink-2 md:table-cell`}>{r.status}</td>
                   </tr>
                 );
               })}
