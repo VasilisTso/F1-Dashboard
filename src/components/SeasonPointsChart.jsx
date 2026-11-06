@@ -124,8 +124,8 @@ export function SeasonPointsChart({ rows, teamName, chart = true, animate = true
           </span>
         </figcaption>
       )}
-      <details className="mt-4 rounded-panel border border-line">
-        <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-ink-2 hover:text-ink">
+      <details className="mt-4 border-t border-line">
+        <summary className="cursor-pointer py-2.5 text-sm font-medium text-ink-2 hover:text-ink">
           Show as table
         </summary>
         <div className="max-h-80 overflow-auto border-t border-line">{table}</div>

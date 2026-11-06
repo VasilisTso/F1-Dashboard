@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Link } from "react-router-dom";
 import { LuArrowRight, LuChevronDown } from "react-icons/lu";
 import { useSchedule, useSeasonResults } from "../hooks/queries";
@@ -23,11 +24,14 @@ const fullDate = (race) =>
     ...(race.time ? { hour: "2-digit", minute: "2-digit" } : {}),
   });
 
-// "done" once the race has results or its start has passed; the first race after that is "next".
+// A race runs ~2h; until results land it stays "next" for a while after lights out.
+const RACE_WINDOW = 3 * 60 * 60 * 1000;
+
+// "done" once the race has results or its start is well past; the first race after that is "next".
 const withStatus = (calendar, results, now) => {
   let nextFound = false;
   return calendar.map((race) => {
-    const done = results[race.round]?.length > 0 || raceStart(race).getTime() <= now;
+    const done = results[race.round]?.length > 0 || raceStart(race).getTime() + RACE_WINDOW <= now;
     let status = done ? "done" : "upcoming";
     if (!done && !nextFound) {
       status = "next";
@@ -104,7 +108,7 @@ function CalendarStrip({ races, selected, onSelect }) {
 
 function ResultList({ results, withSeason }) {
   return (
-    <ol className="divide-y divide-line border-t border-line">
+    <ol className="tower divide-y divide-line border-t border-line">
       {results.map((r) => (
         <li key={r.Driver.driverId} className="flex min-h-10 items-center gap-2 px-4 py-1.5 text-sm">
           <span className="w-10 shrink-0 text-right [&_.font-display]:text-lg">
@@ -127,6 +131,8 @@ function ResultList({ results, withSeason }) {
 
 function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
   const [open, setOpen] = useState(false);
+  // MotionConfig only strips transforms; height would still animate, so skip it here.
+  const reduceMotion = useReducedMotion();
   const loc = race.Circuit.Location;
   const winner = results?.find((r) => r.position === "1");
   const listId = `round-${race.round}-results`;
@@ -155,7 +161,11 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
           {loc.locality}, {loc.country}
         </p>
         <p className="text-xs text-ink-3">
-          {race.Circuit.circuitName} · <time dateTime={race.date}>{fullDate(race)}</time>
+          {race.Circuit.circuitName} ·{" "}
+          {/* nowrap: the date and start time break as one unit, never a lone "19:00". */}
+          <time dateTime={race.date} className="whitespace-nowrap">
+            {fullDate(race)}
+          </time>
         </p>
       </div>
 
@@ -181,11 +191,20 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
           </p>
         )}
 
-        {open && results?.length > 0 && (
-          <div id={listId}>
-            <ResultList results={results} withSeason={withSeason} />
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {open && results?.length > 0 && (
+            <motion.div
+              id={listId}
+              className="overflow-hidden"
+              initial={reduceMotion ? false : { height: 0 }}
+              animate={{ height: "auto" }}
+              exit={reduceMotion ? undefined : { height: 0, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }}
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <ResultList results={results} withSeason={withSeason} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="flex items-center justify-between gap-2 border-t border-line px-2 py-1">
           {results?.length > 0 ? (

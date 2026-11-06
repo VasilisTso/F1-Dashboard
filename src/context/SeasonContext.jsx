@@ -10,7 +10,9 @@ const SeasonContext = createContext(null);
 export function SeasonProvider({ children }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const raw = searchParams.get("season");
-  const season = raw && /^\d{4}$/.test(raw) ? raw : CURRENT_SEASON;
+  // This year's number is the running season: treat it as "current" so live views and caching apply.
+  const season =
+    raw && /^\d{4}$/.test(raw) && Number(raw) !== new Date().getFullYear() ? raw : CURRENT_SEASON;
 
   const setSeason = useCallback(
     (next) => {

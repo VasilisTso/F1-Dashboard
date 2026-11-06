@@ -226,6 +226,7 @@ function RaceDetail() {
         ) : (
           <ErrorState
             title="Race not found"
+            titleAs="h1"
             message={`There's no round ${round} in the ${season} season. Pick a race from the calendar.`}
           />
         )}
@@ -243,12 +244,12 @@ function RaceDetail() {
     <>
       <BackLink season={season} />
       <header className="mb-6 lg:mb-8">
-        <p className="label-caps">
-          {race.season} · Round {race.round}
+        <h1 className="font-display text-4xl uppercase text-ink text-balance sm:text-5xl">{race.raceName}</h1>
+        <p className="mt-2 text-sm text-ink-2">
+          {race.season} season · Round {race.round}
           {sprint.length > 0 && " · Sprint weekend"}
         </p>
-        <h1 className="mt-1 font-display text-4xl uppercase text-ink text-balance sm:text-5xl">{race.raceName}</h1>
-        <p className="mt-2 text-sm text-ink-2">
+        <p className="text-sm text-ink-2">
           {race.Circuit.circuitName} · {loc.locality}, {loc.country} · {formatDate(race.date)}
         </p>
         {race.url && (

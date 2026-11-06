@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { motion } from "motion/react";
 import Sidebar, { MobileNav } from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import { ErrorState } from "./components/ui";
@@ -15,6 +16,7 @@ function App() {
   const [navOpen, setNavOpen] = useState(false);
   const openNav = useCallback(() => setNavOpen(true), []);
   const closeNav = useCallback(() => setNavOpen(false), []);
+  const { pathname } = useLocation();
 
   return (
     <div className="flex min-h-dvh">
@@ -23,7 +25,14 @@ function App() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Navbar onOpenNav={openNav} />
         <main className="bg-grid flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <div className="mx-auto w-full max-w-7xl">
+          {/* Enter-only fade on route change (no exit, so navigation never waits). Season changes keep the page. */}
+          <motion.div
+            key={pathname}
+            className="mx-auto w-full max-w-7xl"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
             <Routes>
               <Route path="/" element={<Navigate to="/overview" replace />} />
               <Route path="/overview" element={<Overview />} />
@@ -35,10 +44,10 @@ function App() {
               <Route path="/races/:season/:round" element={<RaceDetail />} />
               <Route
                 path="*"
-                element={<ErrorState title="Page not found" message="That page doesn't exist. Pick a section from the menu." />}
+                element={<ErrorState title="Page not found" titleAs="h1" message="That page doesn't exist. Pick a section from the menu." />}
               />
             </Routes>
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>

@@ -24,8 +24,9 @@ const SESSIONS = [
   ["Qualifying", "Qualifying"],
 ];
 
-// "2026-11-08" + "17:00:00Z" -> Date (time missing = treat as start of day UTC).
-const toDate = ({ date, time }) => new Date(`${date}T${time ?? "00:00:00Z"}`);
+// "2026-11-08" + "17:00:00Z" -> Date. No time = end of the local day, as on the Races page,
+// so an untimed session never counts as started early.
+const toDate = ({ date, time }) => new Date(time ? `${date}T${time}` : `${date}T23:59:59`);
 
 const weekendSessions = (race) =>
   [...SESSIONS.filter(([key]) => race[key]).map(([key, name]) => ({ name, start: toDate(race[key]), timed: !!race[key].time })),
@@ -64,11 +65,10 @@ function NextRace({ race, withSeason }) {
       title="Next race"
       action={<CardLink to={withSeason(`/races/${race.season}/${race.round}`)}>Race page</CardLink>}
     >
-      <p className="label-caps">Round {race.round}</p>
-      <h3 className="mt-1 font-display text-3xl uppercase text-ink text-balance">{race.raceName}</h3>
+      <h3 className="font-display text-3xl uppercase text-ink text-balance">{race.raceName}</h3>
       <p className="mt-1 text-sm text-ink-2">
         <span aria-hidden>{countryFlag(loc.country)} </span>
-        {race.Circuit.circuitName} · {loc.locality}, {loc.country}
+        Round {race.round} · {race.Circuit.circuitName} · {loc.locality}, {loc.country}
       </p>
 
       <div className="mt-5">
@@ -109,6 +109,8 @@ function NextRace({ race, withSeason }) {
 
 // Step heights for P1 / P2 / P3; rendered in P2 · P1 · P3 order like a real podium.
 const STEP = { 1: "h-28 sm:h-32", 2: "h-20 sm:h-24", 3: "h-14 sm:h-16" };
+// Steps rise in reverse finishing order (P3, P2, P1) so the winner lands last.
+const STEP_DELAY = { 1: "240ms", 2: "120ms", 3: "0ms" };
 
 function Podium({ race, withSeason }) {
   const top3 = race.Results.slice(0, 3);
@@ -135,7 +137,8 @@ function Podium({ race, withSeason }) {
               </div>
             </div>
             <div
-              className={`flex items-start justify-center rounded-t-panel border border-b-0 border-line bg-surface-3 pt-2 ${STEP[pos]}`}
+              className={`step-rise flex items-start justify-center rounded-t-panel bg-surface-3 pt-2 ${STEP[pos]}`}
+              style={{ "--delay": STEP_DELAY[pos] }}
             >
               <span className={`font-display text-4xl ${pos === 1 ? "text-best" : "text-ink"}`}>
                 <span className="sr-only">Position </span>
@@ -169,11 +172,10 @@ function LastRace({ query, isCurrent, withSeason }) {
         <p className="text-sm text-ink-2">No race has finished yet this season.</p>
       ) : (
         <>
-          <p className="label-caps">Round {race.round}</p>
-          <h3 className="mt-1 font-display text-3xl uppercase text-ink text-balance">{race.raceName}</h3>
+          <h3 className="font-display text-3xl uppercase text-ink text-balance">{race.raceName}</h3>
           <p className="mt-1 mb-6 text-sm text-ink-2">
             <span aria-hidden>{countryFlag(race.Circuit.Location.country)} </span>
-            {race.Circuit.circuitName} ·{" "}
+            Round {race.round} · {race.Circuit.circuitName} ·{" "}
             {new Date(`${race.date}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "long" })}
           </p>
           <div className="mt-auto">
@@ -214,7 +216,7 @@ function GapRow({ position, constructorId, name, sub, points, leaderPoints, to }
           <span className="mt-1.5 flex items-center gap-3">
             <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3" aria-hidden>
               <span
-                className={`block h-full rounded-full ${isLeader ? "bg-best" : "bg-ink-3"}`}
+                className={`bar-wipe block h-full rounded-full ${isLeader ? "bg-best" : "bg-ink-3"}`}
                 style={{ width: `${share * 100}%` }}
               />
             </span>
@@ -247,7 +249,7 @@ function TopFive({ title, query, allTo, label, toRow }) {
       ) : rows.length === 0 ? (
         <p className="px-4 py-6 text-sm text-ink-2">No races have been scored yet.</p>
       ) : (
-        <ol className="divide-y divide-line" aria-label={`Top 5 ${label}`}>
+        <ol className="tower divide-y divide-line" aria-label={`Top 5 ${label}`}>
           {rows.map((row) => (
             <GapRow key={row.id} {...row} leaderPoints={leaderPoints} />
           ))}

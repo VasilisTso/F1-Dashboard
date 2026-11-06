@@ -1,29 +1,68 @@
 # F1 Dashboard
 
-A modern web application that provides an interactive Formula 1 experience, displaying current season data for drivers, constructors, and races.
+A Formula 1 fan dashboard for any season, styled like a broadcast timing tower: championship standings, the race calendar and results, and history pages for every constructor and driver.
+
+![Overview](screenshots/overview.png)
 
 ## Features
 
-- **Overview Page:** Quick stats and summary of the current F1 season.  
-- **Drivers Page:** List of drivers with team info and current standings.  
-- **Constructors Page:** Constructors leaderboard, team stats, and historical performance.  
-- **Races Page:** Full season calendar with race results, interactive race buttons, and smooth scrolling.  
-- Responsive design using **TailwindCSS**.  
-- Smooth animations and styled scrollbars for better UX.  
+- **Overview:** live countdown to the next race with the weekend schedule in your local time, last-race podium, and top-5 drivers and constructors with gap-to-leader bars.
+- **Drivers:** timing-tower standings plus the grid grouped by team, with search and a team filter (`?team=`).
+- **Driver profiles** (`/drivers/:id`): career stats (seasons, starts, wins, podiums, poles, teams), Wikipedia bio and photo, all-time teams, and a race-by-race results table for the selected season.
+- **Constructors:** standings and team cards linking to each team's profile.
+- **Constructor profiles** (`/constructors/:id`): career stats, Wikipedia intro and logo, current season and drivers, and a points-per-season chart with championship seasons highlighted. The last 15 seasons load first; full history loads on request through a throttled queue and is cached locally.
+- **Races:** calendar strip with finished / next / upcoming status, race cards with winner and expandable full result.
+- **Race pages** (`/races/:season/:round`): race result, sprint result and qualifying (Q1–Q3), with winner, pole, fastest lap and laps.
+- **Season selector:** every page works for any season from 1950 on, kept in the URL (`?season=2021`).
+- **Dark and light themes**, responsive down to phone width with a drawer menu.
+- **Motion with purpose:** standings rows wipe in like a broadcast graphic, gap bars fill, podium steps rise, the active nav block slides, filtered cards glide into place. All of it respects `prefers-reduced-motion`.
+- **Accessible:** keyboard navigable, visible focus, WCAG 2.2 AA contrast in both themes, team colors always paired with names.
 
 ## Tech Stack
 
-- **React** (functional components + hooks)  
-- **TailwindCSS** for styling  
-- **Ergast API** for real-time F1 data  
+- **React 19** + **Vite 7**
+- **Tailwind CSS v4** (design tokens in `src/index.css`, documented in `DESIGN.md`)
+- **TanStack React Query** for caching and retries
+- **React Router 7**
+- **Recharts** for the points-per-season chart
+- **Motion** for route, layout and nav animations
+- **[Jolpica F1 API](https://github.com/jolpica/jolpica-f1)** (Ergast-compatible) for data, **Wikipedia REST API** for intros and images
+
+Jolpica is rate limited (about 4 requests/second and 500/hour), so the app batches season results into paginated calls, throttles history loads and caches aggressively.
+
+## Getting started
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build
+npm run lint
+```
+
+No API keys or environment variables are needed.
 
 ## Preview
-<img width="1918" height="907" alt="Screenshot 2025-10-27 204603" src="https://github.com/user-attachments/assets/a1e9d39c-b470-446c-b89a-344d6b5ffa4f" />
 
-<img width="1919" height="908" alt="Screenshot 2025-11-24 194608" src="https://github.com/user-attachments/assets/b1f262e6-2e33-49f3-a898-b37be7db8ee7" />
-<img width="1918" height="911" alt="Screenshot 2025-11-24 194624" src="https://github.com/user-attachments/assets/6e68f893-9ee0-4d5e-831e-b0021bf4debc" />
+| Drivers | Constructor profile |
+| --- | --- |
+| ![Drivers](screenshots/drivers.png) | ![Ferrari profile](screenshots/constructor-detail.png) |
 
-<img width="1910" height="695" alt="Screenshot 2025-11-24 194649" src="https://github.com/user-attachments/assets/ba9750e1-1d9b-47d0-9bb0-9ca0d7b80c72" />
-<img width="1919" height="909" alt="Screenshot 2025-11-24 194703" src="https://github.com/user-attachments/assets/7bd722c1-c4e1-467b-aa6a-3fee5253dcbc" />
+| Driver profile | Race page |
+| --- | --- |
+| ![Driver profile](screenshots/driver-detail.png) | ![Race page](screenshots/race-detail.png) |
 
-<img width="1914" height="913" alt="Screenshot 2025-10-27 204756" src="https://github.com/user-attachments/assets/461f718a-ba83-42f4-8380-9ce8eda3c37f" />
+| Constructors | Races |
+| --- | --- |
+| ![Constructors](screenshots/constructors.png) | ![Races](screenshots/races.png) |
+
+### Mobile
+
+<p>
+  <img src="screenshots/overview-mobile.png" alt="Overview on mobile" width="260" />
+  <img src="screenshots/constructor-detail-mobile.png" alt="Constructor profile on mobile" width="260" />
+  <img src="screenshots/races-mobile.png" alt="Races on mobile" width="260" />
+</p>
+
+---
+
+Not affiliated with Formula 1. Data from the Jolpica F1 API and Wikipedia.

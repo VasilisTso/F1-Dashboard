@@ -58,6 +58,8 @@ export const useNextRace = () => {
     queryFn: api.getNextRace,
     enabled: isCurrent,
     ...LIVE,
+    // Keeps an open Overview moving on to the following round once a race is classified.
+    refetchInterval: 10 * 60 * 1000,
   });
 };
 
@@ -181,14 +183,15 @@ export function useConstructorHistory(constructorId, seasons, { full = false } =
   const loadOlder = full || olderCached;
 
   const recentQ = useQuery({
-    queryKey: ["constructorHistory", constructorId, "recent"],
+    // The season list is part of the key: a newly listed season must refetch, not hit the cache.
+    queryKey: ["constructorHistory", constructorId, "recent", recent.join(",")],
     queryFn: () => api.getConstructorSeasonPoints(constructorId, recent, addRow, known.current),
     enabled: !!constructorId && recent.length > 0,
     retry: false, // per-request retries happen inside
     staleTime: HOUR,
   });
   const olderQ = useQuery({
-    queryKey: ["constructorHistory", constructorId, "older"],
+    queryKey: ["constructorHistory", constructorId, "older", older.length],
     queryFn: () => api.getConstructorSeasonPoints(constructorId, older, addRow, known.current),
     enabled: !!constructorId && loadOlder && older.length > 0,
     retry: false,

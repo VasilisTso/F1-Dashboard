@@ -195,7 +195,7 @@ function Teams({ teamsQ }) {
       ) : teamsQ.error ? (
         <ErrorState onRetry={teamsQ.refetch} className="border-0 p-0" />
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="tower divide-y divide-line">
           {teamsQ.data.map((c) => (
             <li key={c.constructorId}>
               <Link
@@ -347,6 +347,7 @@ function DriverProfile({ driverId }) {
         ) : (
           <ErrorState
             title="Driver not found"
+            titleAs="h1"
             message={`There's no driver with the id “${driverId}”. Pick a driver from the drivers list.`}
           />
         )}

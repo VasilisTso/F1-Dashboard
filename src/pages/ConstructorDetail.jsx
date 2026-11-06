@@ -149,7 +149,7 @@ function CurrentSeason({ constructorId }) {
           {driversQ.isPending ? (
             <SkeletonRows rows={2} label="Loading drivers" />
           ) : (
-            <ul className="divide-y divide-line">
+            <ul className="tower divide-y divide-line">
               {drivers.map((s) => (
                 <li key={s.Driver.driverId}>
                   <Link
@@ -267,6 +267,7 @@ function ConstructorProfile({ constructorId }) {
         ) : (
           <ErrorState
             title="Constructor not found"
+            titleAs="h1"
             message={`There's no constructor with the id “${constructorId}”. Pick a team from the constructors list.`}
           />
         )}

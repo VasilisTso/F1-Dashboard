@@ -188,10 +188,11 @@ const getWithRetry = async (path, tries = 4) => {
 
 // Finished seasons never change, so their rows are kept in localStorage: a team's history costs
 // its requests once per browser, not once per visit. Storage failures just mean refetching.
-const FINAL_BEFORE = new Date().getFullYear();
+// Read per call so a tab left open across New Year treats the finished season as final.
+const isFinalSeason = (season) => Number(season) < new Date().getFullYear();
 const seasonKey = (constructorId, season) => `f1:constructorSeason:${constructorId}:${season}`;
 const readSeason = (constructorId, season) => {
-  if (Number(season) >= FINAL_BEFORE) return undefined;
+  if (!isFinalSeason(season)) return undefined;
   try {
     const raw = localStorage.getItem(seasonKey(constructorId, season));
     return raw == null ? undefined : JSON.parse(raw); // null = team didn't score that season
@@ -200,7 +201,7 @@ const readSeason = (constructorId, season) => {
   }
 };
 const writeSeason = (constructorId, season, row) => {
-  if (Number(season) >= FINAL_BEFORE) return;
+  if (!isFinalSeason(season)) return;
   try {
     localStorage.setItem(seasonKey(constructorId, season), JSON.stringify(row));
   } catch {
@@ -236,7 +237,7 @@ export const getConstructorSeasonPoints = async (constructorId, seasons, onProgr
           wins: Number(s.wins),
           position: Number(s.position),
           // A current-year P1 is a lead, not a title (yet).
-          inProgress: Number(season) >= FINAL_BEFORE,
+          inProgress: !isFinalSeason(season),
         }
       : null;
     writeSeason(constructorId, season, row);

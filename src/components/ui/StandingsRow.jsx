@@ -60,7 +60,7 @@ export function StandingsList({ label, children, showExtra, linked = false }) {
         <span className="label-caps w-12 shrink-0 text-right sm:w-16">Gap</span>
         {linked && <span className="w-4 shrink-0" />}
       </div>
-      <ol className="divide-y divide-line">{children}</ol>
+      <ol className="tower divide-y divide-line">{children}</ol>
     </div>
   );
 }

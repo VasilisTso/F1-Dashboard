@@ -1,14 +1,17 @@
 import { LuTriangleAlert, LuRotateCw } from "react-icons/lu";
 
 // Inline error / empty message. Pass `onRetry` to show a retry button (e.g. query.refetch).
+// `titleAs="h1"` when the state replaces a whole page (not found), so the page keeps a heading.
 export function ErrorState({
   title = "Couldn't load data",
   message = "The F1 data service didn't respond. It may be rate limiting requests; try again in a moment.",
   onRetry,
   tone = "error",
   className = "",
+  titleAs = "p",
 }) {
   const isError = tone === "error";
+  const Title = titleAs;
   return (
     <div
       role={isError ? "alert" : "status"}
@@ -16,7 +19,7 @@ export function ErrorState({
     >
       <div className="flex items-center gap-2">
         {isError && <LuTriangleAlert className="size-5 shrink-0 text-danger" aria-hidden />}
-        <p className="font-semibold text-ink">{title}</p>
+        <Title className="font-semibold text-ink">{title}</Title>
       </div>
       {message && <p className="max-w-prose text-sm text-ink-2">{message}</p>}
       {onRetry && (

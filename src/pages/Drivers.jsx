@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { LuSearch, LuArrowRight, LuX } from "react-icons/lu";
+import { AnimatePresence, motion } from "motion/react";
 import { useDrivers, useDriverStandings } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
 import {
@@ -17,10 +18,24 @@ import {
 const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
 const NO_TEAM = "__none";
 
-function DriverCard({ driver, to }) {
+// Filtering: cards that stay glide to their new slot, cards that leave fade out of the way.
+const EASE = [0.16, 1, 0.3, 1];
+const cardMotion = {
+  layout: true,
+  initial: { opacity: 0, scale: 0.96 },
+  animate: { opacity: 1, scale: 1 },
+  exit: { opacity: 0, scale: 0.96, transition: { duration: 0.15 } },
+  transition: { duration: 0.3, ease: EASE },
+};
+
+// `ref` is passed through so AnimatePresence (popLayout) can measure the card.
+function DriverCard({ driver, to, ref }) {
   const s = driver.standing;
   return (
-    <li className="relative flex flex-col rounded-panel border border-line bg-surface-2 shadow-raised transition-colors duration-150 hover:border-line-strong">
+    <motion.li
+      ref={ref}
+      {...cardMotion}
+      className="relative flex flex-col rounded-panel border border-line bg-surface-2 shadow-raised transition-colors duration-150 hover:border-line-strong">
       <div className="flex items-start gap-3 p-4">
         <span className="font-display w-12 shrink-0 text-4xl text-ink-3" aria-hidden>
           {driver.permanentNumber ?? "—"}
@@ -57,14 +72,14 @@ function DriverCard({ driver, to }) {
           </div>
         ))}
       </dl>
-    </li>
+    </motion.li>
   );
 }
 
-function TeamGroup({ team, drivers, profileTo, driverTo }) {
+function TeamGroup({ team, drivers, profileTo, driverTo, ref }) {
   const headingId = `team-${team.constructorId || NO_TEAM}`;
   return (
-    <section aria-labelledby={headingId}>
+    <motion.section ref={ref} {...cardMotion} aria-labelledby={headingId}>
       <div className="mb-3 flex items-center gap-3">
         <TeamStripe constructorId={team.constructorId} className="h-6" />
         <h3 id={headingId} className="min-w-0 flex-1 truncate font-display text-xl uppercase text-ink">
@@ -79,12 +94,14 @@ function TeamGroup({ team, drivers, profileTo, driverTo }) {
           </Link>
         )}
       </div>
-      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {drivers.map((d) => (
-          <DriverCard key={d.driverId} driver={d} to={driverTo(d.driverId)} />
-        ))}
+      <ul className="relative grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {drivers.map((d) => (
+            <DriverCard key={d.driverId} driver={d} to={driverTo(d.driverId)} />
+          ))}
+        </AnimatePresence>
       </ul>
-    </section>
+    </motion.section>
   );
 }
 
@@ -262,16 +279,18 @@ function Drivers() {
             message={query ? `Nothing matches “${search}”.` : `No drivers found for ${teamFilterName}.`}
           />
         ) : (
-          <div className="space-y-8">
-            {visible.map((g) => (
-              <TeamGroup
-                key={g.team.constructorId || NO_TEAM}
-                team={g.team}
-                drivers={g.drivers}
-                profileTo={g.team.constructorId ? withSeason(`/constructors/${g.team.constructorId}`) : null}
-                driverTo={driverTo}
-              />
-            ))}
+          <div className="relative flex flex-col gap-8">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visible.map((g) => (
+                <TeamGroup
+                  key={g.team.constructorId || NO_TEAM}
+                  team={g.team}
+                  drivers={g.drivers}
+                  profileTo={g.team.constructorId ? withSeason(`/constructors/${g.team.constructorId}`) : null}
+                  driverTo={driverTo}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </section>
