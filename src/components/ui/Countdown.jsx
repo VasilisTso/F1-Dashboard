@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useNow } from "../../hooks/useNow";
 
 const UNITS = [
   ["days", 86400],
@@ -6,15 +6,6 @@ const UNITS = [
   ["min", 60],
   ["sec", 1],
 ];
-
-function useNow(intervalMs = 1000) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(id);
-  }, [intervalMs]);
-  return now;
-}
 
 // Live countdown to `target` (Date | ISO string). Shows `doneLabel` once the time has passed.
 export function Countdown({ target, doneLabel = "Underway" }) {

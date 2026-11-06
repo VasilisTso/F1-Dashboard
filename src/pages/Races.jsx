@@ -1,121 +1,302 @@
-import React, { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { LuArrowRight, LuChevronDown } from "react-icons/lu";
 import { useSchedule, useSeasonResults } from "../hooks/queries";
+import { useSeason } from "../context/SeasonContext";
+import { useNow } from "../hooks/useNow";
+import { countryFlag } from "../lib/countries";
+import { ErrorState, FinishCell, PageHeader, Skeleton, TeamStripe } from "../components/ui";
 
-function Races() {
-  const raceRefs = useRef({});
-  const scheduleQ = useSchedule();
-  const resultsQ = useSeasonResults();
+const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
 
-  const calendar = scheduleQ.data ?? [];
-  const results = resultsQ.data ?? {};
+// Race start; races without a time count from the end of the day so they aren't "done" too early.
+const raceStart = (race) => new Date(race.time ? `${race.date}T${race.time}` : `${race.date}T23:59:59`);
 
-  // Next upcoming race (none for past seasons)
-  const today = new Date();
-  const nextRaceRound = calendar.find((r) => new Date(r.date) > today)?.round ?? null;
-  // Highlight the next race if there is one, else the last race
-  const selectedRace = nextRaceRound ?? calendar.at(-1)?.round;
+const shortDate = (race) =>
+  new Date(`${race.date}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
-  const scrollToRace = (round) => {
-    const element = raceRefs.current[round];
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      // Temporary highlight
-      element.classList.add("ring-2", "ring-[#E10600]");
-      setTimeout(() => element.classList.remove("ring-2", "ring-[#E10600]"), 1500);
+const fullDate = (race) =>
+  raceStart(race).toLocaleString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    ...(race.time ? { hour: "2-digit", minute: "2-digit" } : {}),
+  });
+
+// "done" once the race has results or its start has passed; the first race after that is "next".
+const withStatus = (calendar, results, now) => {
+  let nextFound = false;
+  return calendar.map((race) => {
+    const done = results[race.round]?.length > 0 || raceStart(race).getTime() <= now;
+    let status = done ? "done" : "upcoming";
+    if (!done && !nextFound) {
+      status = "next";
+      nextFound = true;
     }
-  };
+    return { ...race, status };
+  });
+};
 
-  if (scheduleQ.isPending) return <div className="p-8 text-gray-300">Loading races...</div>;
-  if (scheduleQ.error) return <div className="p-8 text-red-400">Error: {String(scheduleQ.error.message || scheduleQ.error)}</div>;
+const STATUS_LABEL = { done: "Finished", next: "Next", upcoming: "Upcoming" };
 
+function StatusChip({ status }) {
+  const style = {
+    done: "border-line text-ink-3",
+    next: "border-accent bg-accent text-on-accent",
+    upcoming: "border-line-strong text-ink-2",
+  }[status];
   return (
-    <div className="p-4">
-      {/* ===== Mini Calendar / Race Buttons (Wrapped, No Scroll) ===== */}
-      <div className="mb-8 bg-[#1a1a1a] rounded-2xl p-4 shadow-md border border-gray-900">
-        <h2 className="text-lg font-semibold flex justify-center border-b border-gray-800 text-white mb-4">Race Calendar</h2>
-        <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-[#E10600]/70 scrollbar-track-[#111] rounded-md pr-2">
-          <div className="flex flex-wrap justify-center gap-3">
-            {calendar.map((race) => {
-              const isSelected = selectedRace === race.round;
-              const isNext = nextRaceRound === race.round;
-              
-              return (
-                <button
-                  key={race.round}
-                  onClick={() => scrollToRace(race.round)}
-                  className={`px-3 py-2 rounded-xl transition-all duration-300 flex flex-col items-center text-center text-sm cursor-pointer w-[140px]
-                    ${
-                      isSelected
-                        ? "bg-red-950 text-white shadow-md hover:bg-red-900"
-                        : "bg-[#333] text-gray-300 hover:bg-[#444]"
-                    }
-                    ${isNext ? "border border-gray-500 shadow-[0_0_6px_#E10600]" : ""}
-                  `}    
-                >
-                  <span className="font-semibold">
-                    Race {race.round}
-                  </span>
-                  <span className="text-xs text-gray-400 truncate w-full">
-                    {race.Circuit.Location.locality}
-                  </span>
-                  <span className="text-xs text-gray-500">{race.date}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {resultsQ.isPending && <p className="px-4 text-gray-400">Loading results...</p>}
-      {resultsQ.error && <p className="px-4 text-red-400">Couldn't load results: {resultsQ.error.message}</p>}
-
-      {/* ===== Races Grid ===== */}
-      <div className="p-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {calendar.map((race) => (
-          <div
-            key={race.round}
-            ref={(el) => (raceRefs.current[race.round] = el)}
-            className="bg-[#1a1a1a] text-white p-5 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
-          >
-            {/* Race Header */}
-            <div className="mb-3">
-              <h3 className="text-xl font-bold mb-1">{race.raceName}</h3>
-              <p className="text-gray-400 text-sm">
-                {race.date} | {race.Circuit.circuitName}
-              </p>
-              <p className="text-gray-400 text-sm">
-                {race.Circuit.Location.locality}, {race.Circuit.Location.country}
-              </p>
-            </div>
-
-            {/* Race Results */}
-            {results[race.round]?.length > 0 && (
-              <div className="mt-4">
-                <h4 className="font-semibold mb-2 text-blue-400">Race Results</h4>
-                <ul className="space-y-1 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
-                  {results[race.round].map((r) => (
-                    <li
-                      key={r.position}
-                      className="flex justify-between items-center text-sm bg-[#222] p-2 rounded-md hover:bg-[#333] transition-colors"
-                    >
-                      <span>
-                        {r.position}. {r.Driver.givenName} {r.Driver.familyName} (
-                        {r.Constructor.name})
-                      </span>
-                      <span className="font-semibold text-yellow-600">{r.points} pts</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+    <span className={`rounded-panel border px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider ${style}`}>
+      {STATUS_LABEL[status]}
+    </span>
   );
 }
 
-export default Races
+// ---- Calendar strip --------------------------------------------------------
+
+function CalendarStrip({ races, selected, onSelect }) {
+  const listRef = useRef(null);
+  const nextRound = races.find((r) => r.status === "next")?.round;
+  // Start the strip at the next race (or the end of a finished season) instead of round 1.
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const target = nextRound ? list.querySelector(`[data-round="${nextRound}"]`) : list.lastElementChild;
+    if (target) list.scrollLeft = target.offsetLeft - list.clientWidth / 2 + target.offsetWidth / 2;
+  }, [nextRound]);
+
+  return (
+    <nav aria-label="Race calendar" className="mb-8">
+      {/* `relative` keeps the chips' sr-only text inside the scroll box (it would widen the page). */}
+      <ol ref={listRef} className="relative -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+        {races.map((race) => (
+          <li key={race.round} data-round={race.round} className="shrink-0">
+            <a
+              href={`#round-${race.round}`}
+              onClick={() => onSelect(race.round)}
+              aria-current={race.status === "next" ? "step" : undefined}
+              className={`flex w-28 flex-col gap-1 rounded-panel border px-3 py-2 transition-colors duration-150 hover:bg-surface-3 ${
+                race.status === "next" ? "border-accent" : selected === race.round ? "border-ink" : "border-line"
+              } ${selected === race.round ? "bg-surface-3" : "bg-surface-2"}`}
+            >
+              <span className="flex items-center justify-between">
+                <span className={`font-display text-lg ${race.status === "done" ? "text-ink-3" : "text-ink"}`}>
+                  R{race.round}
+                </span>
+                <span aria-hidden>{countryFlag(race.Circuit.Location.country)}</span>
+              </span>
+              <span className={`truncate text-sm font-medium ${race.status === "done" ? "text-ink-2" : "text-ink"}`}>
+                {race.Circuit.Location.locality}
+              </span>
+              <span className="text-xs text-ink-3">
+                {shortDate(race)}
+                <span className="sr-only"> · {STATUS_LABEL[race.status]}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+// ---- Race card -------------------------------------------------------------
+
+function ResultList({ results, withSeason }) {
+  return (
+    <ol className="divide-y divide-line border-t border-line">
+      {results.map((r) => (
+        <li key={r.Driver.driverId} className="flex min-h-10 items-center gap-2 px-4 py-1.5 text-sm">
+          <span className="w-10 shrink-0 text-right [&_.font-display]:text-lg">
+            <FinishCell result={r} />
+          </span>
+          <TeamStripe constructorId={r.Constructor.constructorId} className="h-6" />
+          <Link
+            to={withSeason(`/drivers/${r.Driver.driverId}`)}
+            className="min-w-0 flex-1 truncate text-ink hover:underline"
+          >
+            {r.Driver.givenName} {r.Driver.familyName}
+            <span className="ml-2 text-xs text-ink-2">{r.Constructor.name}</span>
+          </Link>
+          <span className="w-10 shrink-0 text-right font-semibold text-ink">{formatPoints(r.points)}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function RaceCard({ race, results, resultsLoading, selected, withSeason }) {
+  const [open, setOpen] = useState(false);
+  const loc = race.Circuit.Location;
+  const winner = results?.find((r) => r.position === "1");
+  const listId = `round-${race.round}-results`;
+  const detailTo = withSeason(`/races/${race.season}/${race.round}`);
+
+  return (
+    <li
+      id={`round-${race.round}`}
+      // Next keeps its red border; hover and the race picked in the strip get a neutral ink edge.
+      className={`flex scroll-mt-24 flex-col rounded-panel border bg-surface-2 shadow-raised transition-[border-color,outline-color,translate] duration-150 motion-safe:hover:-translate-y-0.5 ${
+        race.status === "next" ? "border-accent" : selected ? "border-ink" : "border-line hover:border-ink-2"
+      } ${selected ? "outline-2 outline-offset-2 outline-ink" : "outline-transparent"}`}
+    >
+      <div className="p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="label-caps">Round {race.round}</span>
+          <StatusChip status={race.status} />
+        </div>
+        <h3 className="mt-2 font-display text-2xl uppercase text-ink text-balance">
+          <Link to={detailTo} className="underline decoration-transparent underline-offset-2 hover:decoration-ink transition-colors duration-150">
+            {race.raceName}
+          </Link>
+        </h3>
+        <p className="mt-1 text-sm text-ink-2">
+          <span aria-hidden>{countryFlag(loc.country)} </span>
+          {loc.locality}, {loc.country}
+        </p>
+        <p className="text-xs text-ink-3">
+          {race.Circuit.circuitName} · <time dateTime={race.date}>{fullDate(race)}</time>
+        </p>
+      </div>
+
+      <div className="mt-auto border-t border-line">
+        {winner ? (
+          <div className="flex items-center gap-3 px-4 py-3">
+            <TeamStripe constructorId={winner.Constructor.constructorId} className="h-9" />
+            <div className="min-w-0 flex-1">
+              <p className="label-caps">Winner</p>
+              <p className="truncate font-semibold text-ink">
+                {winner.Driver.givenName} {winner.Driver.familyName}
+              </p>
+            </div>
+            <span className="text-right text-xs text-ink-2">{winner.Constructor.name}</span>
+          </div>
+        ) : race.status === "done" && resultsLoading ? (
+          <div className="px-4 py-3">
+            <Skeleton className="h-9 w-48" />
+          </div>
+        ) : (
+          <p className="px-4 py-3 text-sm text-ink-2">
+            {race.status === "done" ? "Results not published yet." : "Results appear after the chequered flag."}
+          </p>
+        )}
+
+        {open && results?.length > 0 && (
+          <div id={listId}>
+            <ResultList results={results} withSeason={withSeason} />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2 border-t border-line px-2 py-1">
+          {results?.length > 0 ? (
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={listId}
+              onClick={() => setOpen((v) => !v)}
+              className="inline-flex h-10 items-center gap-1.5 rounded-panel px-2 text-sm font-medium text-ink-2 hover:bg-surface-3 hover:text-ink transition-colors duration-150"
+            >
+              <LuChevronDown
+                className={`size-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+              {open ? "Hide result" : "Full result"}
+            </button>
+          ) : (
+            <span />
+          )}
+          <Link
+            to={detailTo}
+            className="inline-flex h-10 items-center gap-1 rounded-panel px-2 text-sm font-medium text-ink hover:bg-surface-3 transition-colors duration-150"
+          >
+            Race details <LuArrowRight className="size-4" aria-hidden />
+            <span className="sr-only">: {race.raceName}</span>
+          </Link>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+// ---- Page ------------------------------------------------------------------
+
+function Races() {
+  const { withSeason } = useSeason();
+  const scheduleQ = useSchedule();
+  const resultsQ = useSeasonResults();
+  const now = useNow(60_000);
+  // Race picked in the calendar strip (also restored from a #round-N link).
+  const [selected, setSelected] = useState(() => window.location.hash.match(/^#round-(\d+)$/)?.[1] ?? null);
+
+  if (scheduleQ.error) {
+    return (
+      <>
+        <PageHeader title="Races" />
+        <ErrorState onRetry={scheduleQ.refetch} />
+      </>
+    );
+  }
+
+  const results = resultsQ.data ?? {};
+  const races = withStatus(scheduleQ.data ?? [], results, now);
+  const finished = races.filter((r) => r.status === "done").length;
+  const meta = scheduleQ.isPending
+    ? "Loading calendar…"
+    : races.length
+      ? `${races[0].season} season · ${races.length} rounds · ${finished} finished`
+      : "No calendar for this season yet";
+
+  return (
+    <>
+      <PageHeader title="Races" meta={meta} />
+
+      {scheduleQ.isPending ? (
+        <>
+          <div className="mb-8 flex gap-2 overflow-hidden">
+            {Array.from({ length: 8 }, (_, i) => (
+              <Skeleton key={i} className="h-20 w-28 shrink-0" />
+            ))}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="h-60" />
+            ))}
+          </div>
+        </>
+      ) : races.length === 0 ? (
+        <ErrorState tone="empty" title="No races" message="This season has no calendar yet." />
+      ) : (
+        <>
+          <CalendarStrip races={races} selected={selected} onSelect={setSelected} />
+          {resultsQ.error && (
+            <ErrorState
+              className="mb-6"
+              title="Couldn't load results"
+              message="The calendar loaded but race results didn't. Winners will show once they load."
+              onRetry={resultsQ.refetch}
+            />
+          )}
+          <section aria-labelledby="rounds-heading">
+            <h2 id="rounds-heading" className="sr-only">
+              Rounds
+            </h2>
+            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {races.map((race) => (
+                <RaceCard
+                  key={race.round}
+                  race={race}
+                  results={results[race.round]}
+                  resultsLoading={resultsQ.isPending}
+                  selected={selected === race.round}
+                  withSeason={withSeason}
+                />
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
+    </>
+  );
+}
+
+export default Races;
