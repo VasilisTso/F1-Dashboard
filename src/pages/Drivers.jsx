@@ -4,6 +4,7 @@ import { LuSearch, LuArrowRight, LuX } from "react-icons/lu";
 import { AnimatePresence, motion } from "motion/react";
 import { useDrivers, useDriverStandings } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   Card,
   PageHeader,
@@ -115,7 +116,8 @@ function Drivers() {
   const t = useT();
   const { nationality } = useDataLabels();
   const [search, setSearch] = useState("");
-  const { withSeason } = useSeason();
+  const { season: picked, isCurrent, withSeason } = useSeason();
+  useDocumentTitle(t("common.nav.drivers"), !isCurrent && picked);
   // ?team=<constructorId>, e.g. from the Constructors page.
   const [searchParams, setSearchParams] = useSearchParams();
   const teamFilter = searchParams.get("team") || "";

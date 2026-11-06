@@ -11,6 +11,7 @@ import App from './App.jsx'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      // Off by default; live-season queries opt back in (LIVE in hooks/queries.js).
       refetchOnWindowFocus: false,
       retry: 2,
       // Back off generously: most failures are Jolpica rate limits (429).

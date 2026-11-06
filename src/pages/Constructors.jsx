@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { LuSearch, LuArrowRight } from "react-icons/lu";
 import { useConstructorStandings } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   Card,
   PageHeader,
@@ -67,7 +68,8 @@ function Constructors() {
   const t = useT();
   const { nationality } = useDataLabels();
   const [search, setSearch] = useState("");
-  const { withSeason } = useSeason();
+  const { season: picked, isCurrent, withSeason } = useSeason();
+  useDocumentTitle(t("common.nav.constructors"), !isCurrent && picked);
   const { data, isPending, error, refetch } = useConstructorStandings();
 
   if (error) {

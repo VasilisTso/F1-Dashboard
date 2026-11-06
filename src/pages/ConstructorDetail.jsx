@@ -11,6 +11,7 @@ import {
   useWikiSummary,
 } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { SeasonPointsChart, isTitle } from "../components/SeasonPointsChart";
 import { WikiIntro } from "../components/WikiIntro";
 import { Card, ErrorState, Skeleton, SkeletonRows, StatGrid, StatTile, TeamStripe } from "../components/ui";
@@ -230,6 +231,7 @@ function ConstructorProfile({ constructorId }) {
   const team = teamQ.data;
   const wikiQ = useWikiSummary(team?.url);
   const history = useConstructorHistory(constructorId, seasonsQ.data, { full });
+  useDocumentTitle(team?.name, t("common.nav.constructors"));
 
   if (teamQ.isPending) {
     return (
