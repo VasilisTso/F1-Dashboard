@@ -56,22 +56,30 @@ export const getNextRace = async () =>
 export const getLastRaceResults = async (season = "current") =>
   (await get(`/${season}/last/results.json`)).RaceTable.Races[0] ?? null;
 
-// Every result of a season in a few paginated calls; returns { [round]: Results[] }.
-// A race can straddle two pages, so results are merged by round.
-export const getSeasonResults = async (season = "current") => {
+// Every row of a paginated season endpoint, merged by round: { [round]: rows[] }.
+// A race can straddle two pages, so rows are appended per round.
+const getByRound = async (path, field) => {
   const byRound = {};
   let offset = 0;
   let total = Infinity;
   while (offset < total) {
-    const data = await get(`/${season}/results.json`, { limit: PAGE_LIMIT, offset });
+    const data = await get(path, { limit: PAGE_LIMIT, offset });
     total = Number(data.total) || 0;
     for (const race of data.RaceTable.Races) {
-      (byRound[race.round] ??= []).push(...race.Results);
+      (byRound[race.round] ??= []).push(...race[field]);
     }
     offset += PAGE_LIMIT;
   }
   return byRound;
 };
+
+// Every result of a season in a few paginated calls; returns { [round]: Results[] }.
+export const getSeasonResults = (season = "current") => getByRound(`/${season}/results.json`, "Results");
+
+// Every sprint result of a season, same shape. Sprints started in 2021, so older seasons
+// cost no request.
+export const getSeasonSprints = async (season = "current") =>
+  season !== "current" && Number(season) < 2021 ? {} : getByRound(`/${season}/sprint.json`, "SprintResults");
 
 // Poles are counted as starts from grid slot 1: Jolpica's qualifying table only covers recent
 // seasons and has gaps (Senna: 3 vs 65 real), while grid data is complete. Grid penalties

@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { LuArrowLeft, LuExternalLink, LuTimer } from "react-icons/lu";
-import { useRace } from "../hooks/queries";
+import { useRace, useSchedule } from "../hooks/queries";
+import { CalendarButton } from "../components/CalendarButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   Card,
@@ -205,6 +206,10 @@ function RaceDetail() {
   const valid = /^\d{4}$/.test(params.season) && /^\d{1,2}$/.test(params.round);
   const { season, round } = params;
   const { data: race, isPending, error, refetch } = useRace(valid ? season : null, valid ? round : null);
+  // Session times only come with the schedule; fetch it just for weekends still to come.
+  const upcoming = !!race && race.results.length === 0 && new Date(`${race.date}T23:59:59`) > new Date();
+  const scheduleQ = useSchedule(season, { enabled: upcoming });
+  const weekend = upcoming ? scheduleQ.data?.find((r) => r.round === race.round) : null;
   useDocumentTitle(race && `${race.raceName} ${race.season}`, t("races.title"));
 
   if (valid && isPending) {
@@ -267,6 +272,13 @@ function RaceDetail() {
           )}
         </p>
         {start && <ZoneLabel at={start} className="mt-1 flex w-fit" />}
+        {weekend && (
+          <CalendarButton
+            races={[weekend]}
+            filename={`f1-${race.season}-round-${race.round}.ics`}
+            className="mt-3 flex w-fit"
+          />
+        )}
         {race.url && (
           <a
             href={race.url}

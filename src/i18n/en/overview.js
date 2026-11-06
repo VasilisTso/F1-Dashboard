@@ -43,4 +43,20 @@ export default {
     loading: "Loading constructors",
     top5: "Top 5 constructors",
   },
+  weekend: {
+    live: "{session} underway",
+    endsAround: "Scheduled to end around {time}",
+    liveBadge: "Live",
+    awaitingTitle: "Race finished",
+    awaiting: "Results are usually published within a few hours. This page updates by itself.",
+  },
+  maths: {
+    left: "Max {points} pts left",
+    weekends: { one: "{n} weekend", other: "{n} weekends" },
+    contenders: { one: "{n} in contention", other: "{n} in contention" },
+    clinched: "{name} has clinched the title",
+    champion: "Champion",
+    out: "out of contention",
+    tie: "A tie on points is still possible; it would go to the most wins.",
+  },
 };

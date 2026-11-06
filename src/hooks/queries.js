@@ -5,15 +5,20 @@ import { useSeason } from "../context/SeasonContext";
 import { useI18n } from "../i18n/LanguageContext";
 
 const HOUR = 60 * 60 * 1000;
-const DAY = 24 * HOUR;
+export const WEEK = 7 * 24 * HOUR;
+
+// `meta.persist` marks queries main.jsx saves to IndexedDB, so they survive reloads and
+// new visits (see PERSIST_MAX_AGE there; gcTime must be at least that long).
+const PERSIST = { persist: true };
 
 // Live season data changes after each session, so it refetches when the tab regains focus
-// (only once stale, so at most every 5 minutes). History never changes.
+// (only once stale, so at most every 5 minutes). Not persisted: an old copy would pass for live.
 const LIVE = { staleTime: 5 * 60 * 1000, refetchOnWindowFocus: true };
-const HISTORY = { staleTime: DAY, gcTime: DAY };
-// All-time totals move at most once per race: keep them for the session instead of the
-// default 5-minute gcTime, so revisiting a profile doesn't re-run its 6–12 count requests.
-const CAREER = { staleTime: HOUR, gcTime: HOUR };
+// Finished seasons, profiles and wiki text: effectively fixed, kept for a week across visits.
+const HISTORY = { staleTime: WEEK, gcTime: WEEK, meta: PERSIST };
+// All-time totals move at most once per race. Persisted so a profile paints instantly, then
+// refreshed in the background once an hour old.
+const CAREER = { staleTime: HOUR, gcTime: WEEK, meta: PERSIST };
 const staleFor = (season) => (season === "current" ? LIVE : HISTORY);
 
 export const useSeasons = () =>
@@ -37,11 +42,16 @@ export const useConstructorStandings = () => {
   });
 };
 
-export const useSchedule = () => {
-  const { season } = useSeason();
+// `override` (a year, e.g. from a race URL) beats the season selector. This year maps to
+// "current" so it shares the cache entry with the rest of the app.
+export const useSchedule = (override, { enabled = true } = {}) => {
+  const ctx = useSeason();
+  const season =
+    override == null ? ctx.season : Number(override) === new Date().getFullYear() ? "current" : String(override);
   return useQuery({
     queryKey: ["schedule", season],
     queryFn: () => api.getSchedule(season),
+    enabled,
     ...staleFor(season),
   });
 };
@@ -51,6 +61,15 @@ export const useSeasonResults = () => {
   return useQuery({
     queryKey: ["seasonResults", season],
     queryFn: () => api.getSeasonResults(season),
+    ...staleFor(season),
+  });
+};
+
+export const useSeasonSprints = () => {
+  const { season } = useSeason();
+  return useQuery({
+    queryKey: ["seasonSprints", season],
+    queryFn: () => api.getSeasonSprints(season),
     ...staleFor(season),
   });
 };
@@ -100,6 +119,8 @@ export const useDriverCareer = (driverId) =>
     queryFn: () => api.getDriverCareer(driverId),
     enabled: !!driverId,
     ...CAREER,
+    // A driver whose last season is over won't add to the totals: no hourly refresh.
+    staleTime: (q) => (Number(q.state.data?.lastSeason) < new Date().getFullYear() ? WEEK : HOUR),
   });
 
 export const useDriverConstructors = (driverId) =>

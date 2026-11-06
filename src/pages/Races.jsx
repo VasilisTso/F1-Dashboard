@@ -10,6 +10,7 @@ import { countryFlag } from "../lib/countries";
 import { ErrorState, FinishCell, PageHeader, Skeleton, TeamStripe, ZoneLabel, useZone } from "../components/ui";
 import { useI18n } from "../i18n/LanguageContext";
 import { useDataLabels } from "../i18n/data";
+import { CalendarButton } from "../components/CalendarButton";
 
 // Race start; races without a time count from the end of the day so they aren't "done" too early.
 const raceStart = (race) => new Date(race.time ? `${race.date}T${race.time}` : `${race.date}T23:59:59`);
@@ -278,7 +279,17 @@ function Races() {
 
   return (
     <>
-      <PageHeader title={t("races.title")} meta={meta}>
+      <PageHeader
+        title={t("races.title")}
+        meta={meta}
+        actions={
+          <CalendarButton
+            races={races.filter((r) => r.status !== "done")}
+            scope="season"
+            filename={`f1-${races[0]?.season}-season.ics`}
+          />
+        }
+      >
         {/* Named once for the page; every card's time is in this zone (tooltip: UTC). */}
         {races.length > 0 && <ZoneLabel at={raceStart(races.find((r) => r.status === "next") ?? races.at(-1))} className="mt-1 flex w-fit" />}
       </PageHeader>
