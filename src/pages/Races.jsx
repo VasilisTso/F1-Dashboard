@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { LuArrowRight, LuChevronDown } from "react-icons/lu";
 import { useSchedule, useSeasonResults } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useNow } from "../hooks/useNow";
 import { countryFlag } from "../lib/countries";
 import { ErrorState, FinishCell, PageHeader, Skeleton, TeamStripe, ZoneLabel, useZone } from "../components/ui";
@@ -244,7 +245,8 @@ function RaceCard({ race, results, resultsLoading, selected, withSeason, zone })
 
 function Races() {
   const { t } = useI18n();
-  const { withSeason } = useSeason();
+  const { season: picked, isCurrent, withSeason } = useSeason();
+  useDocumentTitle(t("races.title"), !isCurrent && picked);
   const scheduleQ = useSchedule();
   const resultsQ = useSeasonResults();
   const now = useNow(60_000);

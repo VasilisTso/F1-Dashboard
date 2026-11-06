@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { LuArrowLeft, LuExternalLink, LuTimer } from "react-icons/lu";
 import { useRace } from "../hooks/queries";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   Card,
   ErrorState,
@@ -77,6 +78,7 @@ function DriverCell({ result, season, fastest }) {
 // Classification table for the race or the sprint.
 function ResultsTable({ results, season }) {
   const { t, fmt } = useI18n();
+  const { status } = useDataLabels();
   return (
     <div className="relative overflow-x-auto">
       <table className="w-full text-sm">
@@ -110,7 +112,7 @@ function ResultsTable({ results, season }) {
               </td>
               <td className={`${cell} hidden text-right text-ink-2 md:table-cell`}>{r.laps}</td>
               <td className={`${cell} hidden whitespace-nowrap text-right sm:table-cell`}>
-                {r.Time?.time ? <span className="text-ink">{r.Time.time}</span> : <span className="text-ink-2">{r.status}</span>}
+                {r.Time?.time ? <span className="text-ink">{r.Time.time}</span> : <span className="text-ink-2">{status(r.status)}</span>}
               </td>
               <td className={`${cell} text-right font-semibold text-ink`}>{fmt.points(r.points)}</td>
             </tr>
@@ -203,6 +205,7 @@ function RaceDetail() {
   const valid = /^\d{4}$/.test(params.season) && /^\d{1,2}$/.test(params.round);
   const { season, round } = params;
   const { data: race, isPending, error, refetch } = useRace(valid ? season : null, valid ? round : null);
+  useDocumentTitle(race && `${race.raceName} ${race.season}`, t("races.title"));
 
   if (valid && isPending) {
     return (

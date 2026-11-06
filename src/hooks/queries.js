@@ -7,9 +7,13 @@ import { useI18n } from "../i18n/LanguageContext";
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-// Live season data changes after each session; history never does.
-const LIVE = { staleTime: 5 * 60 * 1000 };
+// Live season data changes after each session, so it refetches when the tab regains focus
+// (only once stale, so at most every 5 minutes). History never changes.
+const LIVE = { staleTime: 5 * 60 * 1000, refetchOnWindowFocus: true };
 const HISTORY = { staleTime: DAY, gcTime: DAY };
+// All-time totals move at most once per race: keep them for the session instead of the
+// default 5-minute gcTime, so revisiting a profile doesn't re-run its 6–12 count requests.
+const CAREER = { staleTime: HOUR, gcTime: HOUR };
 const staleFor = (season) => (season === "current" ? LIVE : HISTORY);
 
 export const useSeasons = () =>
@@ -95,7 +99,7 @@ export const useDriverCareer = (driverId) =>
     queryKey: ["driverCareer", driverId],
     queryFn: () => api.getDriverCareer(driverId),
     enabled: !!driverId,
-    staleTime: HOUR,
+    ...CAREER,
   });
 
 export const useDriverConstructors = (driverId) =>
@@ -103,7 +107,7 @@ export const useDriverConstructors = (driverId) =>
     queryKey: ["driverConstructors", driverId],
     queryFn: () => api.getDriverConstructors(driverId),
     enabled: !!driverId,
-    staleTime: HOUR,
+    ...CAREER,
   });
 
 export const useDriverSeasonResults = (driverId) => {
@@ -148,7 +152,7 @@ export const useConstructorCareer = (constructorId) =>
     queryKey: ["constructorCareer", constructorId],
     queryFn: () => api.getConstructorCareer(constructorId),
     enabled: !!constructorId,
-    staleTime: HOUR,
+    ...CAREER,
   });
 
 export const useConstructorSeasons = (constructorId) =>
@@ -156,7 +160,7 @@ export const useConstructorSeasons = (constructorId) =>
     queryKey: ["constructorSeasons", constructorId],
     queryFn: () => api.getConstructorSeasons(constructorId),
     enabled: !!constructorId,
-    staleTime: HOUR,
+    ...CAREER,
   });
 
 // Seasons fetched before the user asks for the full history.
@@ -189,7 +193,7 @@ export function useConstructorHistory(constructorId, seasons, { full = false } =
     queryFn: () => api.getConstructorSeasonPoints(constructorId, recent, addRow, known.current),
     enabled: !!constructorId && recent.length > 0,
     retry: false, // per-request retries happen inside
-    staleTime: HOUR,
+    ...CAREER,
   });
   const olderQ = useQuery({
     queryKey: ["constructorHistory", constructorId, "older", older.length],

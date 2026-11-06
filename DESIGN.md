@@ -218,6 +218,7 @@ Cool carbon neutrals with one red and three timing-state hues; every value is de
 
 **Display Font:** Archivo variable, condensed (font-stretch 68%, loaded with wdth 62..125), with ui-sans-serif, system-ui fallback
 **Body Font:** Archivo variable at normal width
+**Greek fallback:** Archivo has no Greek glyphs, so Noto Sans variable (wdth 62.5..100, wght 100..900) sits second in the stack. It covers only the Greek characters; the condensed 68% cut and the weights map onto it, so Greek headings keep the condensed broadcast voice. `<html lang="el">` makes CSS `uppercase` drop Greek accents, as Greek typesetting requires.
 
 **Character:** One family in two widths. The condensed bold cut is the broadcast graphic voice, uppercase and tight; the normal width keeps UI text calm and readable.
 
@@ -239,6 +240,8 @@ Cool carbon neutrals with one red and three timing-state hues; every value is de
 ## Layout
 
 App shell: a sticky 224px left rail (`lg` and up, 1024px) beside a column holding a sticky 64px top bar and the main content. Below `lg` the rail disappears; the top bar shows a menu button that opens the same nav in a modal `<dialog>` drawer (288px, max 85vw, 60% black backdrop, native focus trap and Esc). Main content sits on the dot grid (1px dots, 16px pitch), padded 16px / 24px (sm) / 32px (lg), capped at 1280px and centered.
+
+**Wide screens** (`wide` breakpoint, 1680px): list pages (Overview, Drivers, Constructors, Races) widen to 1600px and use the room instead of stretching rows; detail pages keep the 1280px reading column. Overview puts the next/last race cards across two columns with the top-5 standings stacked in a third. Drivers and Constructors put the standings (fixed 38rem column) beside the cards, so timing-tower rows never grow past ~600px. Races goes four cards across.
 
 Rhythm is the 4px Tailwind scale: 8–12px gaps inside rows and tiles, 16–20px panel padding, 24–32px below the page header. Stat tiles flow 2 / 3 / 5 columns (base / sm / lg) with 12px gaps. Interactive targets are 40px tall; standings rows are at least 56px.
 
@@ -271,11 +274,23 @@ One radius (6px, `panel`) for panels, controls, nav items, countdown cells and s
 - **Internal Padding:** 16px, 20px at sm. List bodies drop the padding so rows run edge to edge.
 
 ### Inputs / Fields
-- **Select (season):** native select, 40px, `surface-2`, `line-strong` hairline, body-small 500; hover border shifts to `ink-3`. Inline uppercase label beside it from sm.
+- **Select (team filter):** native select, 40px, `surface-2`, `line-strong` hairline, body-small 500; hover border shifts to `ink-3`.
+
+### Season Picker
+- **Trigger:** 40px `surface-2` button with a `line-strong` hairline: label-caps "Season" (sm+), the year in condensed 1.25rem, "Current" in meta ink-3 when on the running season, and a chevron that turns over when open.
+- **Panel:** `surface-2` panel with the Raised shadow, 12px padding, 320px wide, right-aligned under the trigger. On phones it becomes a full-width sheet under the top bar with a 40% black scrim (portalled to `body`, because the top bar's backdrop blur would trap `position: fixed`).
+- **Content:** a "Current season" row (year in condensed 1.5rem, check when selected), a hairline, decade tabs (4 × 2, active = `surface-3` with a 2px `accent` underline), then a 5 × 2 year grid (slot = year % 10, condensed 1.25rem). The selected year is a solid `accent` block with white text, like the active nav item. Years with no season stay in place in `line-strong` and are skipped.
+- **Keyboard:** arrows move within tabs and grid (↑ from the top row returns to the tabs, ↓ from the tabs enters the grid), Enter/Space picks, Esc closes; focus returns to the trigger. Opens with a 220ms clip-path wipe down (fade under reduced motion).
+
+### Language Switch
+- Two flush 40px segments (EN / ΕΛ, each labelled in its own language) inside one `line-strong` hairline box. Active = `surface-3` with the same 2px `accent` underline as the decade tabs. Top bar from sm; drawer footer on phones.
+
+### Time Zone Label
+- Times are shown in the device's zone and the zone is named once per block, never per time: clock icon + "Times in Athens · GMT+2" in meta `ink-3` (IANA city + short offset at the event date). Each `<time>` carries the UTC equivalent as a tooltip. Used in the weekend schedule header, under the Races page meta and under the race page header.
 
 ### Navigation
 - **Rail items:** 40px rows, 18px icon + label, body-small 500, `ink-2`; hover `surface-3` + `ink`; active is a solid red block (`accent` fill, white text). The wordmark (F1 mark + condensed "DASH" in `accent-ink`) heads the rail; a meta-size footer with attribution and non-affiliation sits at the bottom.
-- **Mobile:** identical list in the drawer; closes after navigation.
+- **Mobile:** identical list in the drawer; closes after navigation. The drawer slides in from the left (320ms ease-out-expo) over a backdrop fading to 60% black and slides out quicker (200ms ease-in) before leaving the top layer (`@starting-style` + discrete `display`/`overlay` transitions, `.drawer` in `index.css`). Reduced motion: opacity only.
 
 ### Timing-Tower Row (signature)
 Position numeral (condensed, right-aligned) → 4px team stripe → name (600) over a meta sub-line → optional extra column (sm+) → points over "pts" → gap. P1 shows "LEADER" in `best`; others show "−N" in `ink-2`. Whole row links with a trailing chevron and `surface-3` hover. Rows live in an ordered list with hairline dividers under a label-caps column-head row.

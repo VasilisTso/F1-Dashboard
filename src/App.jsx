@@ -1,20 +1,39 @@
-import { useCallback, useState } from "react";
+import { Suspense, lazy, useCallback, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import Sidebar, { MobileNav } from "./components/Sidebar";
 import Navbar from "./components/Navbar";
-import { ErrorState } from "./components/ui";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ErrorState, Skeleton, SkeletonRows } from "./components/ui";
 import { useT } from "./i18n/LanguageContext";
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import Overview from "./pages/Overview";
-import Drivers from "./pages/Drivers";
-import Constructors from "./pages/Constructors";
-import Races from "./pages/Races";
-import ConstructorDetail from "./pages/ConstructorDetail";
-import DriverDetail from "./pages/DriverDetail";
-import RaceDetail from "./pages/RaceDetail";
+
+// Overview is the landing page and stays in the main bundle; the rest load on first visit
+// (Recharts only ships with the constructor profile).
+const Drivers = lazy(() => import("./pages/Drivers"));
+const Constructors = lazy(() => import("./pages/Constructors"));
+const Races = lazy(() => import("./pages/Races"));
+const ConstructorDetail = lazy(() => import("./pages/ConstructorDetail"));
+const DriverDetail = lazy(() => import("./pages/DriverDetail"));
+const RaceDetail = lazy(() => import("./pages/RaceDetail"));
+
+function PageFallback() {
+  return (
+    <>
+      <Skeleton className="mb-8 h-12 w-full max-w-sm" />
+      <SkeletonRows rows={8} />
+    </>
+  );
+}
+
+function NotFound() {
+  const t = useT();
+  useDocumentTitle(t("common.error.notFoundTitle"));
+  return <ErrorState title={t("common.error.notFoundTitle")} titleAs="h1" message={t("common.error.notFoundMessage")} />;
+}
 
 function App() {
-  const t = useT();
   const [navOpen, setNavOpen] = useState(false);
   const openNav = useCallback(() => setNavOpen(true), []);
   const closeNav = useCallback(() => setNavOpen(false), []);
@@ -37,20 +56,21 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Routes>
-              <Route path="/" element={<Navigate to="/overview" replace />} />
-              <Route path="/overview" element={<Overview />} />
-              <Route path="/drivers" element={<Drivers />} />
-              <Route path="/drivers/:driverId" element={<DriverDetail />} />
-              <Route path="/constructors" element={<Constructors />} />
-              <Route path="/constructors/:constructorId" element={<ConstructorDetail />} />
-              <Route path="/races" element={<Races />} />
-              <Route path="/races/:season/:round" element={<RaceDetail />} />
-              <Route
-                path="*"
-                element={<ErrorState title={t("common.error.notFoundTitle")} titleAs="h1" message={t("common.error.notFoundMessage")} />}
-              />
-            </Routes>
+            <ErrorBoundary>
+              <Suspense fallback={<PageFallback />}>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/overview" replace />} />
+                  <Route path="/overview" element={<Overview />} />
+                  <Route path="/drivers" element={<Drivers />} />
+                  <Route path="/drivers/:driverId" element={<DriverDetail />} />
+                  <Route path="/constructors" element={<Constructors />} />
+                  <Route path="/constructors/:constructorId" element={<ConstructorDetail />} />
+                  <Route path="/races" element={<Races />} />
+                  <Route path="/races/:season/:round" element={<RaceDetail />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
           </motion.div>
         </main>
       </div>

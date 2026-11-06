@@ -10,6 +10,7 @@ import {
   useWikiSummary,
 } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { WikiIntro } from "../components/WikiIntro";
 import { useI18n, useT } from "../i18n/LanguageContext";
 import { useDataLabels } from "../i18n/data";
@@ -206,6 +207,7 @@ const head = "label-caps px-2 pb-2 sm:px-4";
 
 function SeasonResults({ driverId, label }) {
   const { t, fmt } = useI18n();
+  const { status } = useDataLabels();
   const { data: races, isPending, error, refetch } = useDriverSeasonResults(driverId);
   const sprintsQ = useDriverSeasonSprints(driverId);
   const sprints = sprintsQ.data ?? {};
@@ -302,7 +304,7 @@ function SeasonResults({ driverId, label }) {
                       )}
                     </td>
                     <td className={`${cell} font-display text-right text-lg text-ink`}>{fmt.points(total)}</td>
-                    <td className={`${cell} hidden text-ink-2 md:table-cell`}>{r.status}</td>
+                    <td className={`${cell} hidden text-ink-2 md:table-cell`}>{status(r.status)}</td>
                   </tr>
                 );
               })}
@@ -323,6 +325,7 @@ function DriverProfile({ driverId }) {
   const standingsQ = useDriverStandings();
   const resultsQ = useDriverSeasonResults(driverId);
   const standing = standingsQ.data?.standings.find((s) => s.Driver.driverId === driverId);
+  useDocumentTitle(driver && `${driver.givenName} ${driver.familyName}`, t("common.nav.drivers"));
 
   if (driverQ.isPending) {
     return (

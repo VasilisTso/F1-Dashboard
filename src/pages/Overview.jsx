@@ -8,6 +8,7 @@ import {
   useLastRaceResults,
 } from "../hooks/queries";
 import { useNow } from "../hooks/useNow";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { countryFlag } from "../lib/countries";
 import { useI18n } from "../i18n/LanguageContext";
 import { useDataLabels } from "../i18n/data";
@@ -127,6 +128,7 @@ const STEP_DELAY = { 1: "240ms", 2: "120ms", 3: "0ms" };
 
 function Podium({ race, withSeason }) {
   const { t } = useI18n();
+  const { status } = useDataLabels();
   const top3 = race.Results.slice(0, 3);
   const order = [top3[1], top3[0], top3[2]].filter(Boolean);
   return (
@@ -147,7 +149,7 @@ function Podium({ race, withSeason }) {
                   {r.Driver.familyName}
                 </Link>
                 <p className="truncate text-xs text-ink-2">{r.Constructor.name}</p>
-                <p className="truncate text-xs text-ink-3">{r.Time?.time ?? r.status}</p>
+                <p className="truncate text-xs text-ink-3">{r.Time?.time ?? status(r.status)}</p>
               </div>
             </div>
             <div
@@ -286,7 +288,8 @@ function TopFive({ kind, query, allTo, toRow }) {
 
 function Overview() {
   const { t, fmt } = useI18n();
-  const { isCurrent, withSeason } = useSeason();
+  const { season: picked, isCurrent, withSeason } = useSeason();
+  useDocumentTitle(t("common.nav.overview"), !isCurrent && picked);
   const driversQ = useDriverStandings();
   const constructorsQ = useConstructorStandings();
   const nextQ = useNextRace();
