@@ -13,6 +13,7 @@ import {
 import { toDate, weekendPhase, weekendSessions } from "../lib/weekend";
 import { titleMaths } from "../lib/championship";
 import { CalendarButton } from "../components/CalendarButton";
+import { CircuitMap } from "../components/CircuitMap";
 import { useNow } from "../hooks/useNow";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { countryFlag } from "../lib/countries";
@@ -65,11 +66,21 @@ function NextRace({ race, withSeason }) {
       title={t("overview.nextRace")}
       action={<CardLink to={withSeason(`/races/${race.season}/${race.round}`)}>{t("overview.racePage")}</CardLink>}
     >
-      <h3 className="font-display text-3xl uppercase text-ink text-balance">{race.raceName}</h3>
-      <p className="mt-1 text-sm text-ink-2">
-        <span aria-hidden>{countryFlag(loc.country)} </span>
-        {t("overview.round", { round: race.round })} · {race.Circuit.circuitName} · {loc.locality}, {country(loc.country)}
-      </p>
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-3xl uppercase text-ink text-balance">{race.raceName}</h3>
+          <p className="mt-1 text-sm text-ink-2">
+            <span aria-hidden>{countryFlag(loc.country)} </span>
+            {t("overview.round", { round: race.round })} · {race.Circuit.circuitName} · {loc.locality},{" "}
+            {country(loc.country)}
+          </p>
+        </div>
+        <CircuitMap
+          circuitId={race.Circuit.circuitId}
+          name={race.Circuit.circuitName}
+          className="size-20 shrink-0 sm:size-24"
+        />
+      </div>
 
       {/* The headline follows the weekend: countdown, the session on track, or waiting for results. */}
       <div className="mt-5" role="status">

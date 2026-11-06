@@ -12,7 +12,7 @@ export default {
     races: "Races",
   },
   footer: {
-    data: "Data: Jolpica F1 API. Not affiliated with Formula 1.",
+    data: "Data: Jolpica F1 API. Circuit layouts: bacinger/f1-circuits (MIT). Not affiliated with Formula 1.",
   },
   theme: {
     toLight: "Switch to light theme",
@@ -86,6 +86,11 @@ export default {
     weekendHint: "Downloads every session of this weekend as a calendar file, with a reminder 15 minutes before each",
     season: "Add season to calendar",
     seasonHint: "Downloads every remaining session of the season as a calendar file, with a reminder 15 minutes before each",
+  },
+  circuit: {
+    layout: "Track layout of {name}",
+    current: "Today's layout",
+    currentHint: "The circuit as it is raced today; the {season} layout may have differed",
   },
   progression: {
     title: "Championship progression",

@@ -2,6 +2,8 @@ import { Link, useParams } from "react-router-dom";
 import { LuArrowLeft, LuExternalLink, LuTimer } from "react-icons/lu";
 import { useRace, useSchedule } from "../hooks/queries";
 import { CalendarButton } from "../components/CalendarButton";
+import { CircuitMap } from "../components/CircuitMap";
+import { circuitLayout } from "../lib/circuits";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   Card,
@@ -254,41 +256,60 @@ function RaceDetail() {
   return (
     <>
       <BackLink season={season} />
-      <header className="mb-6 lg:mb-8">
-        <h1 className="font-display text-4xl uppercase text-ink text-balance sm:text-5xl">{race.raceName}</h1>
-        <p className="mt-2 text-sm text-ink-2">
-          {t("common.season.title", { season: race.season })} · {t("races.round", { round: race.round })}
-          {sprint.length > 0 && ` · ${t("races.race.sprintWeekend")}`}
-        </p>
-        <p className="text-sm text-ink-2">
-          {race.Circuit.circuitName} · {loc.locality}, {country(loc.country)} ·{" "}
-          {/* With a start time: local date + time, the zone named next to it, UTC in the tooltip. */}
-          {start ? (
-            <time dateTime={start.toISOString()} title={zone.utc(start)} className="whitespace-nowrap">
-              {fmt.date(start, { ...DATE_OPTS, hour: "2-digit", minute: "2-digit" })}
-            </time>
-          ) : (
-            <time dateTime={race.date}>{fmt.day(race.date, DATE_OPTS)}</time>
+      <header className="mb-6 flex items-start gap-4 sm:gap-6 lg:mb-8">
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-4xl uppercase text-ink text-balance sm:text-5xl">{race.raceName}</h1>
+          <p className="mt-2 text-sm text-ink-2">
+            {t("common.season.title", { season: race.season })} · {t("races.round", { round: race.round })}
+            {sprint.length > 0 && ` · ${t("races.race.sprintWeekend")}`}
+          </p>
+          <p className="text-sm text-ink-2">
+            {race.Circuit.circuitName} · {loc.locality}, {country(loc.country)} ·{" "}
+            {/* With a start time: local date + time, the zone named next to it, UTC in the tooltip. */}
+            {start ? (
+              <time dateTime={start.toISOString()} title={zone.utc(start)} className="whitespace-nowrap">
+                {fmt.date(start, { ...DATE_OPTS, hour: "2-digit", minute: "2-digit" })}
+              </time>
+            ) : (
+              <time dateTime={race.date}>{fmt.day(race.date, DATE_OPTS)}</time>
+            )}
+          </p>
+          {start && <ZoneLabel at={start} className="mt-1 flex w-fit" />}
+          {weekend && (
+            <CalendarButton
+              races={[weekend]}
+              filename={`f1-${race.season}-round-${race.round}.ics`}
+              className="mt-3 flex w-fit"
+            />
           )}
-        </p>
-        {start && <ZoneLabel at={start} className="mt-1 flex w-fit" />}
-        {weekend && (
-          <CalendarButton
-            races={[weekend]}
-            filename={`f1-${race.season}-round-${race.round}.ics`}
-            className="mt-3 flex w-fit"
-          />
-        )}
-        {race.url && (
-          <a
-            href={race.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong hover:decoration-ink"
-          >
-            {t("races.race.wikipedia")} <LuExternalLink className="size-3.5" aria-hidden />
-            <span className="sr-only">{t("common.wiki.newTab")}</span>
-          </a>
+          {race.url && (
+            <a
+              href={race.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline decoration-line-strong hover:decoration-ink"
+            >
+              {t("races.race.wikipedia")} <LuExternalLink className="size-3.5" aria-hidden />
+              <span className="sr-only">{t("common.wiki.newTab")}</span>
+            </a>
+          )}
+        </div>
+        {circuitLayout(race.Circuit.circuitId) && (
+          <figure className="w-20 shrink-0 sm:w-32 lg:w-40">
+            <CircuitMap
+              circuitId={race.Circuit.circuitId}
+              name={race.Circuit.circuitName}
+              className="size-20 sm:size-32 lg:size-40"
+            />
+            {Number(race.season) < new Date().getFullYear() && (
+              <figcaption
+                title={t("common.circuit.currentHint", { season: race.season })}
+                className="mt-1 text-center text-xs text-ink-3"
+              >
+                {t("common.circuit.current")}
+              </figcaption>
+            )}
+          </figure>
         )}
       </header>
 

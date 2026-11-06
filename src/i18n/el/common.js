@@ -12,7 +12,7 @@ export default {
     races: "Αγώνες",
   },
   footer: {
-    data: "Δεδομένα: Jolpica F1 API. Χωρίς σχέση με τη Formula 1.",
+    data: "Δεδομένα: Jolpica F1 API. Χαράξεις πιστών: bacinger/f1-circuits (MIT). Χωρίς σχέση με τη Formula 1.",
   },
   theme: {
     toLight: "Αλλαγή σε φωτεινό θέμα",
@@ -87,6 +87,11 @@ export default {
     weekendHint: "Κατεβάζει όλα τα session του αγωνιστικού ως αρχείο ημερολογίου, με υπενθύμιση 15 λεπτά πριν από το καθένα",
     season: "Η σεζόν στο ημερολόγιο",
     seasonHint: "Κατεβάζει όλα τα υπόλοιπα session της σεζόν ως αρχείο ημερολογίου, με υπενθύμιση 15 λεπτά πριν από το καθένα",
+  },
+  circuit: {
+    layout: "Χάραξη της πίστας {name}",
+    current: "Σημερινή χάραξη",
+    currentHint: "Η πίστα όπως είναι σήμερα· η χάραξη του {season} μπορεί να διέφερε",
   },
   progression: {
     title: "Η πορεία του πρωταθλήματος",
