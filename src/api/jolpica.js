@@ -73,6 +73,10 @@ export const getSeasonResults = async (season = "current") => {
   return byRound;
 };
 
+// Poles are counted as starts from grid slot 1: Jolpica's qualifying table only covers recent
+// seasons and has gaps (Senna: 3 vs 65 real), while grid data is complete. Grid penalties
+// can shift a pole by a race or two, which is close enough for a career total.
+
 // ---- Drivers ---------------------------------------------------------------
 
 export const getDrivers = async (season = "current") =>
@@ -88,7 +92,7 @@ export const getDriverCareer = async (driverId) => {
     count(`${base}/results/1.json`),
     count(`${base}/results/2.json`),
     count(`${base}/results/3.json`),
-    count(`${base}/qualifying/1.json`),
+    count(`${base}/grid/1/results.json`),
     get(`${base}/seasons.json`, { limit: PAGE_LIMIT }),
   ]);
   const years = seasons.SeasonTable.Seasons.map((s) => s.season);
@@ -102,6 +106,16 @@ export const getDriverCareer = async (driverId) => {
     lastSeason: years.at(-1) ?? null,
   };
 };
+
+// Teams a driver has raced for, all time.
+export const getDriverConstructors = async (driverId) =>
+  (await get(`/drivers/${driverId}/constructors.json`, { limit: PAGE_LIMIT })).ConstructorTable.Constructors;
+
+// One driver's race results in a season (one entry per race, `Results[0]` is theirs).
+export const getDriverSeasonResults = async (driverId, season = "current") =>
+  (await get(`/${season}/drivers/${driverId}/results.json`, { limit: PAGE_LIMIT })).RaceTable.Races.map(
+    ({ Results, ...race }) => ({ ...race, result: Results[0] })
+  );
 
 // ---- Constructors ----------------------------------------------------------
 
@@ -119,7 +133,7 @@ export const getConstructorCareer = async (constructorId) => {
   const [races, wins, poles, drivers] = await Promise.all([
     count(`${base}/races.json`),
     count(`${base}/results/1.json`),
-    count(`${base}/qualifying/1.json`),
+    count(`${base}/grid/1/results.json`),
     count(`${base}/drivers.json`),
   ]);
   return { races, wins, poles, drivers };

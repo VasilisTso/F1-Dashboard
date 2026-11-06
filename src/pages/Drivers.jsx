@@ -1,190 +1,282 @@
-import React, { useState } from "react";
-import { GiFullMotorcycleHelmet, GiTrophyCup } from "react-icons/gi";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { LuSearch, LuArrowRight, LuX } from "react-icons/lu";
 import { useDrivers, useDriverStandings } from "../hooks/queries";
 import { useSeason } from "../context/SeasonContext";
-import { getTeamColor } from "../lib/teams";
+import {
+  Card,
+  PageHeader,
+  SkeletonRows,
+  Skeleton,
+  ErrorState,
+  StandingsList,
+  StandingsRow,
+  TeamStripe,
+} from "../components/ui";
 
-const DriverModal = ({ driver, onClose}) => {
-    if (!driver) return null;
+const formatPoints = (p) => Number(p).toLocaleString("en", { maximumFractionDigits: 1 });
+const NO_TEAM = "__none";
 
-    return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="bg-[#1a1a1a] text-white p-6 rounded-2xl w-11/12 md:w-1/2 relative">
-                <button onClick={onClose}
-                    className="absolute top-3 right-3 text-red-600 hover:text-white text-2xl cursor-pointer"
-                >
-                    ✕
-                </button>
-
-                <h2 className="text-3xl font-bold mb-2">
-                    {driver.givenName} {driver.familyName}
-                </h2>
-                <p className="text-gray-400 mb-4">Driver ID: {driver.driverId}</p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <p><span className="font-semibold">Nationality:</span> {driver.nationality}</p>
-                    <p><span className="font-semibold">Date of Birth:</span> {driver.dateOfBirth}</p>
-                    <p><span className="font-semibold">Permanent Number:</span> {driver.permanentNumber || "—"}</p>
-                    <p><span className="font-semibold">Code:</span> {driver.code || "—"}</p>
-                </div>
-
-                <div className="mt-10">
-                    <a href={driver.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#E10600] hover:underline"
-                    >
-                        View Biography →
-                    </a>
-                </div>
-            </div>
+function DriverCard({ driver, to }) {
+  const s = driver.standing;
+  return (
+    <li className="relative flex flex-col rounded-panel border border-line bg-surface-2 shadow-raised transition-colors duration-150 hover:border-line-strong">
+      <div className="flex items-start gap-3 p-4">
+        <span className="font-display w-12 shrink-0 text-4xl text-ink-3" aria-hidden>
+          {driver.permanentNumber ?? "—"}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm text-ink-2">{driver.givenName}</p>
+          <h4 className="truncate font-display text-2xl uppercase text-ink">
+            {/* Stretched link: the whole card opens the profile. */}
+            <Link to={to} className="after:absolute after:inset-0 after:rounded-panel">
+              <span className="sr-only">{driver.givenName} </span>
+              {driver.familyName}
+            </Link>
+          </h4>
+          <p className="truncate text-xs text-ink-2">
+            {driver.nationality}
+            {driver.permanentNumber && <span className="sr-only"> · car number {driver.permanentNumber}</span>}
+          </p>
         </div>
-    );
-};
-
-
-function Drivers() {
-    const [search, setSearch] = useState("");
-    const [selected, setSelected] = useState(null);
-    const { withSeason } = useSeason();
-    const navigate = useNavigate();
-
-    // ?team=<constructorId> from the Constructors page
-    const [searchParams] = useSearchParams();
-    const teamFilter = searchParams.get("team") || "";
-
-    const driversQ = useDrivers();
-    const standingsQ = useDriverStandings();
-
-    if (driversQ.isPending || standingsQ.isPending) return <div className="p-8 text-gray-300">Loading drivers...</div>;
-    const err = driversQ.error || standingsQ.error;
-    if (err) return <div className="p-8 text-red-400">Error: {String(err.message || err)}</div>;
-
-    const driverStandings = standingsQ.data.standings;
-    const seasonLabel = standingsQ.data.season;
-
-    // driverId -> latest constructor of the season
-    const constructorMap = {};
-    driverStandings.forEach((s) => {
-        const c = s.Constructors?.at(-1);
-        if (s.Driver?.driverId && c) constructorMap[s.Driver.driverId] = c;
-    });
-
-    // Merge constructor info, sort by team then family name so teammates render together
-    const drivers = driversQ.data
-        .map((d) => {
-            const c = constructorMap[d.driverId];
-            return { ...d, constructorId: c?.constructorId ?? "", constructorName: c?.name ?? "—" };
-        })
-        .sort((a, b) => a.constructorName.localeCompare(b.constructorName) || a.familyName.localeCompare(b.familyName));
-
-    const teamFilterName = drivers.find((d) => d.constructorId === teamFilter)?.constructorName || teamFilter;
-
-    // Apply both search filter and team filter
-    const filtered = drivers.filter((d) => {
-        const matchesSearch = `${d.givenName} ${d.familyName}`
-            .toLowerCase()
-            .includes(search.toLowerCase());
-        const matchesTeam = teamFilter ? d.constructorId === teamFilter : true;
-        return matchesSearch && matchesTeam;
-    });
-
-    return (
-        <div className="p-6">
-            {/* DRIVER CHAMPIONSHIP LEADERBOARD */}
-            {driverStandings.length > 0 && (
-                <div className="bg-[#121212] rounded-2xl p-4 mb-6 border border-gray-700">
-                    <h2 className="text-xl font-semibold text-white mb-4">
-                        Drivers Championship {seasonLabel}
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {driverStandings.map((driver, index) => {
-                            const d = driver.Driver;
-                            const teamColor = getTeamColor(driver.Constructors?.at(-1)?.constructorId);
-
-                            return (
-                                <div
-                                    key={d.driverId}
-                                    className="bg-[#1A1A1A] flex flex-wrap justify-between items-center border rounded-lg px-4 py-4"
-                                    style={{borderColor: teamColor }}
-                                >
-                                    <span className="text-2xl font-bold"  style={{color: teamColor}}>
-                                        {driver.position || index + 1}. {d.givenName} {d.familyName}
-                                    </span>
-                                    <span className="text-lg text-yellow-400 font-semibold flex items-center gap-2">
-                                        <GiTrophyCup /> {driver.points} pts
-                                    </span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-
-            {/* Show banner if filtered by team */}
-            {teamFilter && (
-                <div className="mb-6 text-gray-300">
-                    Showing drivers for{" "}
-                    <span className="font-bold text-white">{teamFilterName}</span>
-                    <button
-                        onClick={() => navigate(withSeason("/drivers"))}
-                        className="ml-3 text-[#E10600] underline text-sm hover:text-white cursor-pointer"
-                    >
-                        Clear filter
-                    </button>
-                </div>
-            )}
-            
-            <h1 className="flex items-center gap-2 text-white text-3xl font-bold mb-6">
-                <GiFullMotorcycleHelmet />Drivers
-            </h1>
-
-            <input type="text" 
-                placeholder="Search driver"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full md:w-1/2 p-2 rounded-lg [#121212] border border-gray-700 text-white mb-10 focus:outline-none focus:ring-1 focus:ring-[#E10600]"
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
-                {filtered.map(d => {
-                    // background based on team color
-                    const teamColor = getTeamColor(d.constructorId);
-
-                    return (
-                        <div key={d.driverId} onClick={() => setSelected(d)}
-                            // bg-[#1A1A1A]
-                            className="bg-[#1A1A1A] cursor-pointer p-4 rounded-xl border border-gray-400 transition-all duration-300 transform hover:scale-[1.02]"
-                            style={{color: teamColor, borderColor: teamColor, boxShadow: `0 0 10px 0 ${teamColor}40`, }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.boxShadow = `0 0 25px 4px ${teamColor}60`; // brighter on hover
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.boxShadow = `0 0 10px 0 ${teamColor}40`; // revert glow
-                            }}
-                        >
-                            <div className="flex flex-wrap items-center justify-between px-4 py-1">
-                                <div className="text-2xl font-bold mb-4 pr-2">
-                                    {d.givenName} {d.familyName}
-                                </div>
-                                <div className="">
-                                    <div className="text-xl font-semibold mt-2">{d.constructorName}</div>
-                                    <div className="text-xl font-semibold mt-2">{d.nationality}</div>
-                                    <div className="text-xl font-semibold mt-2">
-                                        Number: {d.permanentNumber || "—"}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {selected && <DriverModal driver={selected} onClose={() => setSelected(null)} />}
-        </div>
-    );
+        {driver.code && (
+          <span className="rounded-panel border border-line-strong px-1.5 py-0.5 text-xs font-semibold tracking-wide text-ink-2">
+            {driver.code}
+          </span>
+        )}
+      </div>
+      <dl className="mt-auto grid grid-cols-3 border-t border-line">
+        {[
+          ["Pos", s ? `P${s.position}` : "—"],
+          ["Points", s ? formatPoints(s.points) : "—"],
+          ["Wins", s?.wins ?? "—"],
+        ].map(([k, v], i) => (
+          <div key={k} className={`px-4 py-3 ${i > 0 ? "border-l border-line" : ""}`}>
+            <dt className="label-caps">{k}</dt>
+            <dd className="font-display mt-1 text-xl text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    </li>
+  );
 }
 
-export default Drivers
+function TeamGroup({ team, drivers, profileTo, driverTo }) {
+  const headingId = `team-${team.constructorId || NO_TEAM}`;
+  return (
+    <section aria-labelledby={headingId}>
+      <div className="mb-3 flex items-center gap-3">
+        <TeamStripe constructorId={team.constructorId} className="h-6" />
+        <h3 id={headingId} className="min-w-0 flex-1 truncate font-display text-xl uppercase text-ink">
+          {team.name}
+        </h3>
+        {profileTo && (
+          <Link
+            to={profileTo}
+            className="inline-flex h-10 items-center gap-1 rounded-panel px-2 -mr-2 text-sm font-medium text-ink-2 hover:bg-surface-3 hover:text-ink transition-colors duration-150"
+          >
+            Team profile <LuArrowRight className="size-4" aria-hidden />
+          </Link>
+        )}
+      </div>
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {drivers.map((d) => (
+          <DriverCard key={d.driverId} driver={d} to={driverTo(d.driverId)} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function Drivers() {
+  const [search, setSearch] = useState("");
+  const { withSeason } = useSeason();
+  // ?team=<constructorId>, e.g. from the Constructors page.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const teamFilter = searchParams.get("team") || "";
+  const setTeamFilter = (team) =>
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (team) params.set("team", team);
+      else params.delete("team");
+      return params;
+    });
+
+  const driversQ = useDrivers();
+  const standingsQ = useDriverStandings();
+  const error = driversQ.error || standingsQ.error;
+
+  if (error) {
+    return (
+      <>
+        <PageHeader title="Drivers" />
+        <ErrorState
+          onRetry={() => {
+            driversQ.refetch();
+            standingsQ.refetch();
+          }}
+        />
+      </>
+    );
+  }
+
+  const isPending = driversQ.isPending || standingsQ.isPending;
+  const standings = standingsQ.data?.standings ?? [];
+  const leaderPoints = Number(standings[0]?.points ?? 0);
+  const driverTo = (id) => withSeason(`/drivers/${id}`);
+
+  // Group the season's drivers by their latest team, teams in championship order
+  // (best-placed driver first); drivers without a classified result go last.
+  const standingById = Object.fromEntries(standings.map((s) => [s.Driver.driverId, s]));
+  const groups = new Map();
+  for (const s of standings) {
+    const c = s.Constructors?.at(-1);
+    if (c && !groups.has(c.constructorId)) groups.set(c.constructorId, { team: c, drivers: [] });
+  }
+  for (const d of driversQ.data ?? []) {
+    const standing = standingById[d.driverId];
+    const c = standing?.Constructors?.at(-1);
+    const key = c?.constructorId ?? NO_TEAM;
+    if (!groups.has(key)) groups.set(key, { team: { constructorId: "", name: "Other entries" }, drivers: [] });
+    groups.get(key).drivers.push({ ...d, standing });
+  }
+  const allGroups = [...groups.values()].filter((g) => g.drivers.length > 0);
+  for (const g of allGroups) {
+    g.drivers.sort((a, b) => (Number(a.standing?.position) || 999) - (Number(b.standing?.position) || 999));
+  }
+
+  const query = search.trim().toLowerCase();
+  const visible = allGroups
+    .filter((g) => !teamFilter || g.team.constructorId === teamFilter)
+    .map((g) => ({
+      ...g,
+      drivers: g.drivers.filter((d) =>
+        `${d.givenName} ${d.familyName} ${d.nationality} ${d.code ?? ""}`.toLowerCase().includes(query),
+      ),
+    }))
+    .filter((g) => g.drivers.length > 0);
+
+  const teamFilterName = allGroups.find((g) => g.team.constructorId === teamFilter)?.team.name ?? teamFilter;
+  const season = standingsQ.data?.season;
+  const meta = isPending
+    ? "Loading drivers…"
+    : season
+      ? `${season} season · after round ${standingsQ.data.round}`
+      : "No standings yet for this season";
+
+  return (
+    <>
+      <PageHeader title="Drivers" meta={meta} />
+
+      <Card title="Championship standings" bodyClassName="py-3" className="mb-8">
+        {isPending ? (
+          <SkeletonRows rows={10} label="Loading driver standings" />
+        ) : standings.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-ink-2">No races have been scored yet.</p>
+        ) : (
+          <StandingsList label="Driver" showExtra="Wins" linked>
+            {standings.map((s) => {
+              const team = s.Constructors?.at(-1);
+              return (
+                <StandingsRow
+                  key={s.Driver.driverId}
+                  position={s.position ?? s.positionText}
+                  constructorId={team?.constructorId}
+                  name={`${s.Driver.givenName} ${s.Driver.familyName}`}
+                  sub={team?.name}
+                  points={s.points}
+                  gap={leaderPoints - Number(s.points)}
+                  extra={s.wins}
+                  to={driverTo(s.Driver.driverId)}
+                />
+              );
+            })}
+          </StandingsList>
+        )}
+      </Card>
+
+      <section aria-labelledby="grid-heading">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="grid-heading" className="font-display text-2xl uppercase text-ink">
+            Grid
+          </h2>
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+            <label className="w-full sm:w-52">
+              <span className="sr-only">Filter by team</span>
+              <select
+                value={teamFilter}
+                onChange={(e) => setTeamFilter(e.target.value)}
+                disabled={isPending}
+                className="h-10 w-full rounded-panel border border-line-strong bg-surface-2 px-3 text-sm text-ink hover:border-ink-3"
+              >
+                <option value="">All teams</option>
+                {allGroups
+                  .filter((g) => g.team.constructorId)
+                  .map((g) => (
+                    <option key={g.team.constructorId} value={g.team.constructorId}>
+                      {g.team.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="relative w-full sm:w-64">
+              <span className="sr-only">Search drivers</span>
+              <LuSearch
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+                aria-hidden
+              />
+              <input
+                type="search"
+                placeholder="Search driver or nationality"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-10 w-full rounded-panel border border-line-strong bg-surface-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-3 hover:border-ink-3"
+              />
+            </label>
+          </div>
+        </div>
+
+        {teamFilter && !isPending && (
+          <p className="mb-4 flex flex-wrap items-center gap-2 text-sm text-ink-2" role="status">
+            Showing drivers for <span className="font-semibold text-ink">{teamFilterName}</span>
+            <button
+              type="button"
+              onClick={() => setTeamFilter("")}
+              className="inline-flex h-8 items-center gap-1 rounded-panel border border-line-strong px-2 font-medium text-ink hover:bg-surface-3 transition-colors duration-150"
+            >
+              <LuX className="size-3.5" aria-hidden /> Clear filter
+            </button>
+          </p>
+        )}
+
+        {isPending ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="h-40" />
+            ))}
+          </div>
+        ) : visible.length === 0 ? (
+          <ErrorState
+            tone="empty"
+            title="No drivers match"
+            message={query ? `Nothing matches “${search}”.` : `No drivers found for ${teamFilterName}.`}
+          />
+        ) : (
+          <div className="space-y-8">
+            {visible.map((g) => (
+              <TeamGroup
+                key={g.team.constructorId || NO_TEAM}
+                team={g.team}
+                drivers={g.drivers}
+                profileTo={g.team.constructorId ? withSeason(`/constructors/${g.team.constructorId}`) : null}
+                driverTo={driverTo}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
+export default Drivers;

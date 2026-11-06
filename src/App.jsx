@@ -8,6 +8,7 @@ import Drivers from "./pages/Drivers";
 import Constructors from "./pages/Constructors";
 import Races from "./pages/Races";
 import ConstructorDetail from "./pages/ConstructorDetail";
+import DriverDetail from "./pages/DriverDetail";
 
 function App() {
   const [navOpen, setNavOpen] = useState(false);
@@ -26,6 +27,7 @@ function App() {
               <Route path="/" element={<Navigate to="/overview" replace />} />
               <Route path="/overview" element={<Overview />} />
               <Route path="/drivers" element={<Drivers />} />
+              <Route path="/drivers/:driverId" element={<DriverDetail />} />
               <Route path="/constructors" element={<Constructors />} />
               <Route path="/constructors/:constructorId" element={<ConstructorDetail />} />
               <Route path="/races" element={<Races />} />

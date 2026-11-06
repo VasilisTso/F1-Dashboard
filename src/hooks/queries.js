@@ -95,6 +95,24 @@ export const useDriverCareer = (driverId) =>
     staleTime: HOUR,
   });
 
+export const useDriverConstructors = (driverId) =>
+  useQuery({
+    queryKey: ["driverConstructors", driverId],
+    queryFn: () => api.getDriverConstructors(driverId),
+    enabled: !!driverId,
+    staleTime: HOUR,
+  });
+
+export const useDriverSeasonResults = (driverId) => {
+  const { season } = useSeason();
+  return useQuery({
+    queryKey: ["driverSeasonResults", driverId, season],
+    queryFn: () => api.getDriverSeasonResults(driverId, season),
+    enabled: !!driverId,
+    ...staleFor(season),
+  });
+};
+
 export const useConstructor = (constructorId) =>
   useQuery({
     queryKey: ["constructor", constructorId],
