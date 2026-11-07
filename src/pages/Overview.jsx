@@ -284,7 +284,7 @@ function GapRow({ position, constructorId, name, sub, points, leaderPoints, to, 
                 style={{ width: `${share * 100}%` }}
               />
             </span>
-            <span className="w-20 shrink-0 text-right text-sm">
+            <span className="min-w-20 shrink-0 text-right text-sm">
               {isLeader ? (
                 <span className="font-semibold uppercase text-best">
                   {t(champion ? "overview.maths.champion" : "common.leader")}
@@ -324,7 +324,9 @@ function TitleMaths({ maths, leaderName }) {
   );
 }
 
-function TopFive({ kind, query, allTo, toRow, maths }) {
+// `waiting`: the title maths still needs the schedule; hold the skeleton so the leader label
+// doesn't flip from "Leader" to "Champion" once it lands.
+function TopFive({ kind, query, allTo, toRow, maths, waiting }) {
   const { t } = useI18n();
   const { data, isPending, error, refetch } = query;
   if (error) return <ErrorState title={t(`overview.${kind}.error`)} onRetry={refetch} />;
@@ -338,7 +340,7 @@ function TopFive({ kind, query, allTo, toRow, maths }) {
       action={<CardLink to={allTo}>{t("overview.allStandings")}</CardLink>}
       bodyClassName="py-2"
     >
-      {isPending ? (
+      {isPending || waiting ? (
         <SkeletonRows rows={5} label={t(`overview.${kind}.loading`)} />
       ) : rows.length === 0 ? (
         <p className="px-4 py-6 text-sm text-ink-2">{t("overview.noScores")}</p>
@@ -420,6 +422,7 @@ function Overview() {
             kind="drivers"
             query={driversQ}
             maths={maths(driversQ, "drivers")}
+            waiting={isCurrent && scheduleQ.isPending}
             allTo={withSeason("/drivers")}
             toRow={(s) => ({
               id: s.Driver.driverId,
@@ -435,6 +438,7 @@ function Overview() {
             kind="constructors"
             query={constructorsQ}
             maths={maths(constructorsQ, "constructors")}
+            waiting={isCurrent && scheduleQ.isPending}
             allTo={withSeason("/constructors")}
             toRow={(s) => ({
               id: s.Constructor.constructorId,
