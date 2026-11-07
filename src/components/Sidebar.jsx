@@ -105,6 +105,17 @@ export function MobileNav({ open, onClose }) {
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
+  // Lock page scroll behind the drawer while it is open.
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const prev = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = prev;
+    };
+  }, [open]);
+
   // Close after navigating.
   useEffect(() => {
     onClose();
